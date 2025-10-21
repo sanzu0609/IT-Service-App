@@ -71,13 +71,13 @@
 - [ ] Tạo `UserRepository` (`findByUsername`, `existsByUsername`).
 
 ### 🔒 Security & Config
-- [ ] Cấu hình `SecurityConfig`:
+- [x] Cấu hình `SecurityConfig`:
   - Session-based (STATELESS = ❌).
   - CSRF ON (CookieCsrfTokenRepository).
   - Permit `/auth/**`, `/csrf`, `/swagger-ui/**`.
   - `AuthenticationEntryPoint` 401 JSON.
   - `AccessDeniedHandler` 403 JSON.
-- [ ] Khai báo `PasswordEncoder` = BCrypt.
+- [x] Khai báo `PasswordEncoder` = BCrypt.
 
 ### 🧠 Controller & Service
 - [ ] `AuthController`: `/auth/login`, `/auth/logout`, `/auth/me`.
