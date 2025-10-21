@@ -67,8 +67,8 @@
 ## 3️⃣ Tasks & Checklist
 
 ### 🧩 Entity & Repository
-- [ ] Hoàn thiện `User` entity (role enum, active=true mặc định, timestamps LocalDateTime).
-- [ ] Tạo `UserRepository` (`findByUsername`, `existsByUsername`).
+- [x] Hoàn thiện `User` entity (role enum, active=true mặc định, timestamps LocalDateTime).
+- [x] Tạo `UserRepository` (`findByUsername`, `existsByUsername`).
 
 ### 🔒 Security & Config
 - [x] Cấu hình `SecurityConfig`:
@@ -90,8 +90,8 @@
 - [x] Categories: Hardware, Software, Access.
 
 ### 🧰 CSRF & Headers
-- [ ] `CookieCsrfTokenRepository` bật; client gửi header `X-CSRF-TOKEN`.
-- [ ] Header bảo mật: `X-Frame-Options:DENY`, `X-Content-Type-Options:nosniff`.
+- [x] `CookieCsrfTokenRepository` bật; client gửi header `X-CSRF-TOKEN`.
+- [x] Header bảo mật: `X-Frame-Options:DENY`, `X-Content-Type-Options:nosniff`.
 
 ---
 
