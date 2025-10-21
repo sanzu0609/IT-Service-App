@@ -85,9 +85,9 @@
 - [x] `UserDetailsServiceImpl` (loadUserByUsername).
 
 ### 🧱 Seed Data
-- [ ] 3 users (`admin`, `agent`, `alice`), mật khẩu BCrypt.
-- [ ] Departments: IT, HR.
-- [ ] Categories: Hardware, Software, Access.
+- [x] 3 users (`admin`, `agent`, `alice`), mật khẩu BCrypt.
+- [x] Departments: IT, HR.
+- [x] Categories: Hardware, Software, Access.
 
 ### 🧰 CSRF & Headers
 - [ ] `CookieCsrfTokenRepository` bật; client gửi header `X-CSRF-TOKEN`.
