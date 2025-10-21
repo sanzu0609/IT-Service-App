@@ -80,9 +80,9 @@
 - [x] Khai báo `PasswordEncoder` = BCrypt.
 
 ### 🧠 Controller & Service
-- [ ] `AuthController`: `/auth/login`, `/auth/logout`, `/auth/me`.
-- [ ] `AuthService`: login (authenticate), logout (invalidate session).
-- [ ] `UserDetailsServiceImpl` (loadUserByUsername).
+- [x] `AuthController`: `/auth/login`, `/auth/logout`, `/auth/me`.
+- [x] `AuthService`: login (authenticate), logout (invalidate session).
+- [x] `UserDetailsServiceImpl` (loadUserByUsername).
 
 ### 🧱 Seed Data
 - [ ] 3 users (`admin`, `agent`, `alice`), mật khẩu BCrypt.
