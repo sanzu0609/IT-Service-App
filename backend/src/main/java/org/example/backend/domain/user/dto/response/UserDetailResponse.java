@@ -1,5 +1,7 @@
 package org.example.backend.domain.user.dto.response;
 
+import java.time.LocalDateTime;
+
 public record UserDetailResponse(
         Long id,
         String username,
@@ -9,7 +11,7 @@ public record UserDetailResponse(
         Long departmentId,
         boolean isActive,
         boolean mustChangePassword,
-        String createdAt,
-        String updatedAt
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {
 }

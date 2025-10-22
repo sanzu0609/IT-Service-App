@@ -119,18 +119,18 @@
 
 ### 📦 DTO & Validation
 - [x] `CreateUserRequest`, `UpdateUserRequest`, `ResetPasswordRequest`, `ChangePasswordRequest` (record).
-- [ ] Validate unique `username`/`email`; password policy khi tạo/reset/đổi.
+- [x] Validate unique `username`/`email`; password policy khi tạo/reset/đổi.
 - [x] Response DTO rút gọn (không bao giờ trả `passwordHash`).
 
 ### ⚙️ Service Layer
-- [ ] `UserAdminService`:
+- [x] `UserAdminService`:
   - create (hash password, set mustChangePassword)
   - get/list (filter/pagination)
   - update (profile/role/department/active) với guard
   - resetPassword (generate hoặc từ input, hash + mustChangePassword)
-- [ ] `UserSelfService`:
+- [x] `UserSelfService`:
   - changePassword (verify current, policy, update + clear mustChangePassword)
-- [ ] Helper: random temp password generator.
+- [x] Helper: random temp password generator.
 
 ### 🔒 Authorization & Guards
 - [ ] Tất cả `/users/**` (trừ `/users/change-password`) chỉ **ADMIN**.
