@@ -1,19 +1,19 @@
 # 🧭 ITSM Mini Clone — Project Overview  
-**Version:** v1.1 — Updated for Phase 0B integration  
+**Version:** v1.2 — Simplified (No Asset Module)
 
 ---
 
 ## 0️⃣ Mục tiêu dự án
-Dự án mô phỏng một phần mềm **IT Service Management (ITSM)** cơ bản gồm ba module chính:
+Dự án mô phỏng một phần mềm **IT Service Management (ITSM)** cơ bản gồm 3 module chính:
 
 1. 🎫 **Ticket System** — Quản lý yêu cầu hỗ trợ (Incident/Request)  
-2. 🧳 **Asset Management** — Quản lý tài sản CNTT (máy tính, thiết bị, phần mềm)  
+2. 👤 **User Management** — Quản lý người dùng, vai trò và quyền hạn  
 3. 🔄 **Workflow & SLA** — Theo dõi quy trình xử lý & thời gian phản hồi
 
 Mục tiêu:
-- Dựng nền tảng backend **chuẩn doanh nghiệp** (Spring Boot, Maven, PostgreSQL).
-- Viết **API sạch, có kiểm thử**, tuân thủ layered architecture.
-- Đủ mức độ để trình bày trong **portfolio Java Fresher** (không overkill).
+- Xây dựng backend **chuẩn doanh nghiệp** bằng Spring Boot + PostgreSQL.  
+- Nắm vững **Authentication, Authorization, CRUD, Workflow, Scheduler.**  
+- Tối ưu scope cho **portfolio Java Fresher (10–14 ngày)**.
 
 ---
 
@@ -21,33 +21,31 @@ Mục tiêu:
 
 | Layer | Technology | Ghi chú |
 |-------|-------------|--------|
-| **Language** | Java 21 | Sử dụng record, switch expression, Stream API |
+| **Language** | Java 21 | Hỗ trợ record, pattern matching, Stream API |
 | **Framework** | Spring Boot 3.x | Core, Web, Validation, Data JPA, Scheduling |
-| **Security** | Spring Security (Session-based) | CSRF bật, Cookie login, không dùng JWT |
-| **Build tool** | Maven | Dựng project, quản lý dependencies |
-| **Database** | PostgreSQL | Dùng H2 cho test |
-| **ORM** | Hibernate | JPA annotations chuẩn |
-| **Test** | JUnit 5, Spring Boot Test, MockMvc | Unit + Integration |
-| **Docs** | Markdown, Mermaid, Postman | Cấu trúc /docs/ |
-| **Containerization** | Docker, docker-compose | Chạy app + DB local |
-| **CI/CD (optional)** | GitHub Actions | Build + test tự động |
+| **Security** | Spring Security (Session-based) | CSRF bật, Cookie login, không JWT |
+| **Database** | PostgreSQL | Dùng H2 cho integration test |
+| **Build Tool** | Maven | Quản lý dependencies |
+| **Testing** | JUnit 5, MockMvc, Spring Boot Test | Unit + Integration |
+| **Documentation** | Markdown, Mermaid, Postman | /docs folder |
+| **Containerization** | Docker, docker-compose | App + Database |
+| **CI/CD (optional)** | GitHub Actions | Build & test tự động |
 
 ---
 
 ## 2️⃣ Kiến trúc tổng quan
 
-### 🔹 Mô hình
-**Layered Architecture**
+**Mô hình:** Layered Architecture  
 ```
-controller → service → repository → entity
+Controller → Service → Repository → Entity
 ```
 
-### 🔹 Quy tắc chính
-- Entity chỉ chứa dữ liệu.
-- Service xử lý logic nghiệp vụ.
-- Controller chỉ tiếp nhận request/response.
-- Dùng DTO (record) giữa controller ↔ service.
-- Tách rõ config (security, scheduler, datasource...).
+**Nguyên tắc:**
+- Entity: chỉ chứa dữ liệu.  
+- Service: xử lý logic nghiệp vụ.  
+- Controller: nhận request, trả response DTO.  
+- Sử dụng `record` cho DTO.  
+- Cấu hình tách biệt: Security, Scheduler, Exception handler, etc.
 
 ---
 
@@ -55,25 +53,24 @@ controller → service → repository → entity
 
 | Module | Entity | Ghi chú |
 |---------|---------|--------|
-| **Auth/User** | User, Department | Role, active, mustChangePassword |
-| **Ticket** | Ticket, TicketComment, TicketHistory, Category | CRUD, comment, transition |
-| **Asset** | Asset, AssetHistory | CRUD + checkin/checkout |
-| **SLA/Workflow** | (fields trong Ticket) | deadline + auto-close job |
+| **Auth/User** | User, Department | Role-based access, password reset, CSRF session |
+| **Ticket** | Ticket, TicketComment, TicketHistory, Category | CRUD, comment, workflow, history |
+| **SLA** | (fields trong Ticket) | Deadline + auto-close scheduler |
 
 ---
 
-## 4️⃣ Lifecycle hệ thống (Business Flow)
+## 4️⃣ Lifecycle hệ thống
 
-1. 👤 **User/Agent/Admin đăng nhập** qua `/auth/login` (session-based).  
-2. 👑 **Admin** tạo user mới (qua Phase 0B) và quản lý quyền.  
-3. 🙋‍♂️ **End User** tạo ticket hỗ trợ → auto gán trạng thái `NEW`.  
-4. 🧑‍🔧 **Agent** nhận xử lý → ticket chuyển `IN_PROGRESS → RESOLVED`.  
-5. ✅ **Admin** giám sát, cập nhật SLA và asset liên quan.  
-6. 🕒 **Scheduler** tự đánh cờ SLA (NEAR/BREACHED) & auto close sau N ngày.  
+1. 👤 **User/Agent/Admin** đăng nhập qua `/auth/login` (session-based).  
+2. 👑 **Admin** tạo user mới, đặt role và bắt buộc đổi mật khẩu.  
+3. 🙋 **End User** tạo ticket mới (status = NEW).  
+4. 🧑‍🔧 **Agent** nhận xử lý → chuyển `IN_PROGRESS → RESOLVED`.  
+5. ✅ **User** xác nhận hoặc reopen nếu chưa hài lòng.  
+6. 🕒 **Scheduler (Phase 2)** tự flag SLA và auto-close ticket cũ.
 
 ---
 
-## 5️⃣ ERD Tổng quan (Mermaid)
+## 5️⃣ ERD (Tóm tắt)
 
 ```mermaid
 erDiagram
@@ -85,13 +82,9 @@ erDiagram
     varchar role
     boolean is_active
     boolean must_change_password
+    bigint department_id FK
     timestamp created_at
     timestamp updated_at
-  }
-
-  DEPARTMENTS {
-    bigint id PK
-    varchar name
   }
 
   TICKETS {
@@ -102,33 +95,13 @@ erDiagram
     varchar priority
     bigint reporter_id FK -> USERS.id
     bigint assignee_id FK -> USERS.id
-    bigint related_asset_id FK -> ASSETS.id
     bigint category_id FK -> CATEGORIES.id
+    bigint related_asset_id
     timestamp created_at
     timestamp updated_at
     timestamp sla_response_deadline
     timestamp sla_resolution_deadline
     varchar sla_flag
-  }
-
-  ASSETS {
-    bigint id PK
-    varchar asset_tag
-    varchar type
-    varchar model
-    varchar serial_no
-    varchar status
-    bigint assigned_to FK -> USERS.id
-  }
-
-  ASSET_HISTORY {
-    bigint id PK
-    bigint asset_id FK -> ASSETS.id
-    varchar field
-    varchar old_value
-    varchar new_value
-    bigint changed_by FK -> USERS.id
-    timestamp created_at
   }
 
   TICKET_COMMENTS {
@@ -157,37 +130,34 @@ erDiagram
 
   USERS ||--o{ TICKETS : "reporter_id"
   USERS ||--o{ TICKETS : "assignee_id"
-  USERS ||--o{ ASSETS : "assigned_to"
-  USERS ||--o{ ASSET_HISTORY : "changed_by"
-  USERS ||--o{ TICKET_HISTORY : "changed_by"
   USERS ||--o{ TICKET_COMMENTS : "author_id"
+  USERS ||--o{ TICKET_HISTORY : "changed_by"
+  CATEGORIES ||--o{ TICKETS : "1-N"
 ```
 
 ---
 
 ## 6️⃣ Phân chia Phase
 
-| Phase | Tên | Mô tả | Output |
-|--------|------|--------|---------|
-| **Phase 0** | Authentication & RBAC | Login/logout, session, CSRF | `/auth/*`, `/csrf`, `/auth/me` |
-| **Phase 0B** | User Management | Admin CRUD user, reset/self change password | `/users/*` |
-| **Phase 1** | Ticket Core | CRUD ticket, comment, status transition | `/tickets/*` |
-| **Phase 2** | Asset Management | CRUD asset, checkin/out, link ticket | `/assets/*` |
-| **Phase 3** | SLA & Scheduler | SLA compute, flag (NEAR/BREACHED), auto-close | `@Scheduled` jobs |
-| **Phase 4** | DevOps & Docs | Dockerfile, Compose, Postman, CI | `/Dockerfile`, `/docs/*` |
+| Phase | Nội dung | Mục tiêu chính |
+|--------|-----------|----------------|
+| **Phase 0** | Authentication & RBAC | Login, session, CSRF |
+| **Phase 0B** | User Management | CRUD user, reset/change password |
+| **Phase 1** | Ticket System | CRUD + Comment + Workflow |
+| **Phase 2** | SLA & Scheduler | Deadline, auto-close |
+| **Phase 3** | DevOps & Docs | Docker, README, Postman, CI |
 
 ---
 
 ## 7️⃣ Milestones (timeline gợi ý)
 
-| Sprint | Mục tiêu chính | Thời gian ước lượng |
-|---------|----------------|---------------------|
+| Sprint | Mục tiêu | Thời gian (ước lượng) |
+|---------|-----------|----------------------|
 | Sprint 0 | Auth + RBAC | 2 ngày |
-| Sprint 0B | User CRUD + Password change | 1 ngày |
-| Sprint 1 | Ticket CRUD + Comment + Workflow | 3 ngày |
-| Sprint 2 | Asset CRUD + Checkout/In | 2 ngày |
-| Sprint 3 | SLA & Scheduler | 2 ngày |
-| Sprint 4 | Docker + Docs + Postman | 1 ngày |
+| Sprint 0B | User CRUD | 1 ngày |
+| Sprint 1 | Ticket CRUD + Workflow | 3–4 ngày |
+| Sprint 2 | SLA + Auto-close job | 2 ngày |
+| Sprint 3 | Docker + Postman + Docs | 1–2 ngày |
 
 ---
 
@@ -195,36 +165,37 @@ erDiagram
 
 | Cấp độ | Mục tiêu | Công cụ |
 |--------|-----------|--------|
-| Unit | Logic nghiệp vụ (service, util) | JUnit 5 |
-| Integration | REST API (MockMvc + H2) | SpringBootTest |
-| Manual | End-to-end (Postman, Browser) | Postman |
-| Optional | CI/CD build | GitHub Actions |
+| Unit | Test service logic | JUnit 5 |
+| Integration | REST API + DB | MockMvc + H2 |
+| Manual | Kiểm thử luồng qua Postman | Postman |
+| Optional | CI/CD | GitHub Actions |
 
 ---
 
 ## 9️⃣ Deliverables
 
-- 📁 **Source code:** `/backend` (Spring Boot)  
-- 🧩 **Docs:** `/docs/Overview.md`, `/docs/ERD.md`, `/docs/Phases/*.md`  
+- 📁 **Source:** `/backend` (Spring Boot)  
+- 📄 **Docs:** `/docs/Overview.md`, `/docs/ERD.md`, `/docs/Phases/*.md`  
 - 🧪 **Tests:** `/src/test/java/...`  
 - 🐳 **Docker:** `Dockerfile`, `docker-compose.yml`  
-- 🧭 **Postman Collection:** `ITSM_API.postman_collection.json`
+- 🧭 **Postman:** `ITSM_API.postman_collection.json`
 
 ---
 
-## 🔟 Definition of Done (to close project)
+## 🔟 Definition of Done
 
-- [x] Toàn bộ phase có spec, code, test pass.  
-- [x] App chạy ổn qua `docker compose up`.  
-- [x] Postman test full luồng: login → ticket → asset → SLA → auto close.  
-- [x] README đầy đủ hướng dẫn setup.  
-- [x] GitHub repo public, có tag version.  
+- [x] Auth hoạt động (session + CSRF)  
+- [x] User CRUD hoạt động  
+- [x] Ticket CRUD, Comment, Workflow hoàn chỉnh  
+- [x] SLA flag + Auto-close hoạt động  
+- [x] Docker compose chạy app + Postgres  
+- [x] Tài liệu Postman + README đầy đủ  
 
 ---
 
 ## 📘 Notes
-- **Không dùng JWT** để giảm độ phức tạp — session login là đủ cho fresher-level.  
-- Tất cả spec được thiết kế để **AI Agent** có thể code tự động theo checklist.  
-- Có thể mở rộng thêm UI (React hoặc Thymeleaf) ở giai đoạn sau.
+- Scope được rút gọn để vừa sức **fresher-level (backend focus)**.  
+- Có thể mở rộng Asset module sau khi xin được việc.  
+- Thiết kế hướng “AI Agent friendly”: mỗi phase có spec riêng, dễ generate tự động.
 
 ---
