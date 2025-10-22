@@ -1,4 +1,4 @@
-# 👥 Phase 0B — User Management (Admin CRUD + Self Password Change)
+﻿# 👥 Phase 0B — User Management (Admin CRUD + Self Password Change)
 
 ## 0️⃣ Scope
 - Cho **ADMIN** quản lý người dùng: tạo, xem danh sách, xem chi tiết, cập nhật profile/role/department, **activate/deactivate**, **reset password**.
@@ -114,8 +114,8 @@
 ## 3️⃣ Tasks & Checklist
 
 ### 🧩 Entity & Repository
-- [ ] Cập nhật entity `User` thêm `mustChangePassword` (boolean, default true).
-- [ ] `UserRepository`: search/pagination (`findAll` với `Specification` hoặc query methods).
+- [x] Cập nhật entity `User` thêm `mustChangePassword` (boolean, default true).
+- [x] `UserRepository`: search/pagination (`findAll` với `Specification` hoặc query methods).
 
 ### 📦 DTO & Validation
 - [ ] `CreateUserRequest`, `UpdateUserRequest`, `ResetPasswordRequest`, `ChangePasswordRequest` (record).
