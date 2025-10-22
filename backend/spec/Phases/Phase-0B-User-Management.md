@@ -118,9 +118,9 @@
 - [x] `UserRepository`: search/pagination (`findAll` với `Specification` hoặc query methods).
 
 ### 📦 DTO & Validation
-- [ ] `CreateUserRequest`, `UpdateUserRequest`, `ResetPasswordRequest`, `ChangePasswordRequest` (record).
+- [x] `CreateUserRequest`, `UpdateUserRequest`, `ResetPasswordRequest`, `ChangePasswordRequest` (record).
 - [ ] Validate unique `username`/`email`; password policy khi tạo/reset/đổi.
-- [ ] Response DTO rút gọn (không bao giờ trả `passwordHash`).
+- [x] Response DTO rút gọn (không bao giờ trả `passwordHash`).
 
 ### ⚙️ Service Layer
 - [ ] `UserAdminService`:
