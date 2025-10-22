@@ -226,10 +226,10 @@ NEW → IN_PROGRESS → RESOLVED → CLOSED
 - [x] Generator `ticketNumber`
 
 ### 🔧 Service Layer
-- [ ] `TicketService` — CRUD, assign, status change, generate number  
-- [ ] `CommentService` — thêm/browse comment  
-- [ ] `WorkflowValidator` — kiểm tra trạng thái hợp lệ  
-- [ ] `TicketHistoryService` — ghi log tự động
+- [x] `TicketService` — CRUD, assign, status change, generate number  
+- [x] `CommentService` — thêm/browse comment  
+- [x] `WorkflowValidator` — kiểm tra trạng thái hợp lệ  
+- [x] `TicketHistoryService` — ghi log tự động
 
 ### 🚦 Controller
 - [ ] `/tickets` CRUD  
