@@ -83,6 +83,16 @@ public class UserAdminService {
             user.setDepartmentId(resolveDepartmentId(request.departmentId()));
         }
 
+        if (request.username() != null && !request.username().isBlank()) {
+            validateUsernameChange(user, request.username());
+            user.setUsername(request.username().trim());
+        }
+
+        if (request.email() != null && !request.email().isBlank()) {
+            validateEmailChange(user, request.email());
+            user.setEmail(request.email().trim());
+        }
+
         return toDetail(user);
     }
 
@@ -155,6 +165,20 @@ public class UserAdminService {
     private void guardLastAdmin(User user) {
         if (user.getRole() == UserRole.ADMIN && userRepository.countByRole(UserRole.ADMIN) <= 1) {
             throw new IllegalStateException("Cannot modify the last ADMIN user.");
+        }
+    }
+
+    private void validateUsernameChange(User user, String newUsername) {
+        String trimmed = newUsername.trim();
+        if (!trimmed.equals(user.getUsername()) && userRepository.existsByUsername(trimmed)) {
+            throw new IllegalArgumentException("Username already exists.");
+        }
+    }
+
+    private void validateEmailChange(User user, String newEmail) {
+        String trimmed = newEmail.trim();
+        if (!trimmed.equalsIgnoreCase(user.getEmail()) && userRepository.existsByEmail(trimmed)) {
+            throw new IllegalArgumentException("Email already exists.");
         }
     }
 

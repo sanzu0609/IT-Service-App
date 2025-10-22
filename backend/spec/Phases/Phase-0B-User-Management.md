@@ -133,9 +133,9 @@
 - [x] Helper: random temp password generator.
 
 ### 🔒 Authorization & Guards
-- [ ] Tất cả `/users/**` (trừ `/users/change-password`) chỉ **ADMIN**.
-- [ ] Không cho deactivate chính mình.
-- [ ] Không hạ role **ADMIN cuối cùng**.
+- [x] Tất cả `/users/**` (trừ `/users/change-password`) chỉ **ADMIN**.
+- [x] Không cho deactivate chính mình.
+- [x] Không hạ role **ADMIN cuối cùng**.
 - [ ] CSRF áp dụng với POST/PATCH.
 
 ### 📄 Controller
