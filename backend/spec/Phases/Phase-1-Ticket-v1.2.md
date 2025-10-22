@@ -221,25 +221,25 @@ NEW → IN_PROGRESS → RESOLVED → CLOSED
 ## 4️⃣ Checklist
 
 ### 🧱 Entity + Repository
-- [ ] Ticket, TicketComment, TicketHistory, Category
-- [ ] Repository CRUD + filter (status, priority, assignee, createdAt DESC)
-- [ ] Generator `ticketNumber`
+- [x] Ticket, TicketComment, TicketHistory, Category
+- [x] Repository CRUD + filter (status, priority, assignee, createdAt DESC)
+- [x] Generator `ticketNumber`
 
 ### 🔧 Service Layer
-- [ ] `TicketService` — CRUD, assign, status change, generate number  
-- [ ] `CommentService` — thêm/browse comment  
-- [ ] `WorkflowValidator` — kiểm tra trạng thái hợp lệ  
-- [ ] `TicketHistoryService` — ghi log tự động
+- [x] `TicketService` — CRUD, assign, status change, generate number  
+- [x] `CommentService` — thêm/browse comment  
+- [x] `WorkflowValidator` — kiểm tra trạng thái hợp lệ  
+- [x] `TicketHistoryService` — ghi log tự động
 
 ### 🚦 Controller
-- [ ] `/tickets` CRUD  
-- [ ] `/tickets/{id}/comments`  
-- [ ] `/tickets/{id}/status`
+- [x] `/tickets` CRUD  
+- [x] `/tickets/{id}/comments`  
+- [x] `/tickets/{id}/status`
 
 ### 🔒 Security
-- [ ] Ownership guard (user chỉ xem ticket của mình)  
-- [ ] Role guard (`@PreAuthorize`)  
-- [ ] Validation (subject ≥ 5, description ≥ 10)
+- [x] Ownership guard (user chỉ xem ticket của mình)  
+- [x] Role guard (`@PreAuthorize`)  
+- [x] Validation (subject ≥ 5, description ≥ 10)
 
 ---
 
