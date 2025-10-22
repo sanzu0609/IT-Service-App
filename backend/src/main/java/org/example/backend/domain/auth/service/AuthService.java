@@ -68,7 +68,8 @@ public class AuthService {
         return new AuthUserResponse(
                 userDetails.getId(),
                 userDetails.getUsername(),
-                userDetails.getRole().name()
+                userDetails.getRole().name(),
+                userDetails.isMustChangePassword()
         );
     }
 }

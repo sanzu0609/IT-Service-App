@@ -19,13 +19,22 @@ public class AuthUserDetails implements UserDetails {
     private final UserRole role;
     private final boolean active;
     private final List<GrantedAuthority> authorities;
+    private final boolean mustChangePassword;
 
-    private AuthUserDetails(Long id, String username, String password, UserRole role, boolean active) {
+    private AuthUserDetails(
+            Long id,
+            String username,
+            String password,
+            UserRole role,
+            boolean active,
+            boolean mustChangePassword
+    ) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.role = role;
         this.active = active;
+        this.mustChangePassword = mustChangePassword;
         this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
@@ -35,7 +44,8 @@ public class AuthUserDetails implements UserDetails {
                 user.getUsername(),
                 user.getPasswordHash(),
                 user.getRole(),
-                user.isActive()
+                user.isActive(),
+                user.isMustChangePassword()
         );
     }
 
@@ -45,6 +55,10 @@ public class AuthUserDetails implements UserDetails {
 
     public UserRole getRole() {
         return role;
+    }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
     }
 
     @Override

@@ -1,187 +1,230 @@
-# 📘 Overview.md — ITSM Mini (Session-based Authentication)
-
-## 1️⃣ Mục tiêu & Phạm vi (MVP)
-Xây dựng hệ thống **ITSM mini** (IT Service Management) mô phỏng nền tảng quản lý yêu cầu nội bộ doanh nghiệp.  
-Mục tiêu chính là nắm vững **Spring Boot backend development**, bao gồm:
-- Authentication/Authorization (session-based, không JWT)  
-- Ticket Management (CRUD + comment + workflow)  
-- Asset Management (liên kết với ticket, check-in/out)  
-- SLA Tracking (deadline, auto-close, scheduler)  
-- DevOps cơ bản (Docker + Postgres + Postman + Docs)
-
-> **Mức độ:** Fresher–Junior  
-> **Mục tiêu học tập:** Hiểu rõ cách thiết kế, code, và triển khai một backend dự án thật.
+# 🧭 ITSM Mini Clone — Project Overview  
+**Version:** v1.1 — Updated for Phase 0B integration  
 
 ---
 
-## 2️⃣ Tech Stack (chuẩn hóa cho AI Agent)
+## 0️⃣ Mục tiêu dự án
+Dự án mô phỏng một phần mềm **IT Service Management (ITSM)** cơ bản gồm ba module chính:
 
-| Layer | Công nghệ |
-|-------|------------|
-| **Language** | Java 21 |
-| **Framework** | Spring Boot 3.3.x |
-| **Build Tool** | Maven Wrapper (`./mvnw`) |
-| **Database** | PostgreSQL 15+ |
-| **ORM** | Spring Data JPA (Hibernate) |
-| **Security** | Spring Security 6 (Session-based, CSRF ON) |
-| **Test** | JUnit 5, Mockito, SpringBootTest |
-| **DevOps** | Docker, docker-compose |
-| **Docs** | OpenAPI/Swagger UI, Markdown Specs |
-| **Others** | Lombok (optional), MapStruct (optional), ModelMapper |
+1. 🎫 **Ticket System** — Quản lý yêu cầu hỗ trợ (Incident/Request)  
+2. 🧳 **Asset Management** — Quản lý tài sản CNTT (máy tính, thiết bị, phần mềm)  
+3. 🔄 **Workflow & SLA** — Theo dõi quy trình xử lý & thời gian phản hồi
+
+Mục tiêu:
+- Dựng nền tảng backend **chuẩn doanh nghiệp** (Spring Boot, Maven, PostgreSQL).
+- Viết **API sạch, có kiểm thử**, tuân thủ layered architecture.
+- Đủ mức độ để trình bày trong **portfolio Java Fresher** (không overkill).
 
 ---
 
-## 3️⃣ Kiến trúc hệ thống
+## 1️⃣ Tech Stack
 
-**Mô hình:** `Layered Architecture + Package-by-Feature`  
-Cấu trúc dự án:
+| Layer | Technology | Ghi chú |
+|-------|-------------|--------|
+| **Language** | Java 21 | Sử dụng record, switch expression, Stream API |
+| **Framework** | Spring Boot 3.x | Core, Web, Validation, Data JPA, Scheduling |
+| **Security** | Spring Security (Session-based) | CSRF bật, Cookie login, không dùng JWT |
+| **Build tool** | Maven | Dựng project, quản lý dependencies |
+| **Database** | PostgreSQL | Dùng H2 cho test |
+| **ORM** | Hibernate | JPA annotations chuẩn |
+| **Test** | JUnit 5, Spring Boot Test, MockMvc | Unit + Integration |
+| **Docs** | Markdown, Mermaid, Postman | Cấu trúc /docs/ |
+| **Containerization** | Docker, docker-compose | Chạy app + DB local |
+| **CI/CD (optional)** | GitHub Actions | Build + test tự động |
+
+---
+
+## 2️⃣ Kiến trúc tổng quan
+
+### 🔹 Mô hình
+**Layered Architecture**
 ```
-src/main/java/org/example/backend/
- ├─ domain/
- │   ├─ auth/
- │   ├─ user/
- │   ├─ ticket/
- │   ├─ asset/
- │   ├─ common/
- │   └─ sla/
- ├─ security/
- ├─ config/
- └─ Application.java
+controller → service → repository → entity
 ```
 
-**Nguyên tắc thiết kế:**
-- Single Responsibility cho từng lớp (Entity, Repository, Service, Controller).
-- Dependency Injection (Spring IoC).
-- Validation layer ở DTO.
-- Response chuẩn hóa qua `ApiResponse<T>`.
-
-**Database:** chuẩn hóa 3NF, dùng UUID hoặc bigint làm khóa chính.  
-**Session Management:** dùng cookie `JSESSIONID` (HttpOnly, SameSite=Lax, Secure=true ở prod).  
-**CSRF:** bật, bỏ qua `/auth/login`, `/auth/logout`.
+### 🔹 Quy tắc chính
+- Entity chỉ chứa dữ liệu.
+- Service xử lý logic nghiệp vụ.
+- Controller chỉ tiếp nhận request/response.
+- Dùng DTO (record) giữa controller ↔ service.
+- Tách rõ config (security, scheduler, datasource...).
 
 ---
 
-## 4️⃣ Actors & Roles (RBAC)
+## 3️⃣ Entities chính (theo module)
 
-| Role | Quyền chính | Hành động cụ thể |
-|------|--------------|------------------|
-| **ADMIN** | Quản trị viên | CRUD users/assets/categories, xem tất cả ticket |
-| **AGENT** | Nhân viên IT | Xử lý ticket, đổi trạng thái, comment nội bộ |
-| **END_USER** | Nhân viên thông thường | Tạo, xem, comment, reopen ticket của mình |
-
-### Quy tắc Ownership
-- `END_USER` chỉ truy cập ticket do họ tạo (`reporter_id`).  
-- `AGENT` chỉ thao tác ticket được assign.  
-- `ADMIN` bỏ qua ràng buộc ownership.
+| Module | Entity | Ghi chú |
+|---------|---------|--------|
+| **Auth/User** | User, Department | Role, active, mustChangePassword |
+| **Ticket** | Ticket, TicketComment, TicketHistory, Category | CRUD, comment, transition |
+| **Asset** | Asset, AssetHistory | CRUD + checkin/checkout |
+| **SLA/Workflow** | (fields trong Ticket) | deadline + auto-close job |
 
 ---
 
-## 5️⃣ Use Cases (UC chính)
+## 4️⃣ Lifecycle hệ thống (Business Flow)
 
-| UC | Mô tả | Actor |
-|----|--------|--------|
-| UC01 | Đăng nhập / đăng xuất | All |
-| UC02 | Xem thông tin bản thân (me) | All |
-| UC03 | Tạo ticket mới | END_USER |
-| UC04 | Lọc danh sách ticket | ALL (phân quyền theo vai trò) |
-| UC05 | Cập nhật thông tin ticket (priority, assignee) | AGENT, ADMIN |
-| UC06 | Comment (public/internal) | END_USER, AGENT, ADMIN |
-| UC07 | Chuyển trạng thái ticket (workflow) | AGENT, ADMIN, END_USER (reopen) |
-| UC08 | CRUD tài sản (asset) | ADMIN |
-| UC09 | Check-in/out asset | ADMIN |
-| UC10 | Gán asset vào ticket | ADMIN, AGENT |
-| UC11 | Tính SLA khi tạo ticket | SYSTEM |
-| UC12 | Scheduler SLA (NEAR, BREACHED) | SYSTEM |
-| UC13 | Auto-close ticket sau N ngày | SYSTEM |
+1. 👤 **User/Agent/Admin đăng nhập** qua `/auth/login` (session-based).  
+2. 👑 **Admin** tạo user mới (qua Phase 0B) và quản lý quyền.  
+3. 🙋‍♂️ **End User** tạo ticket hỗ trợ → auto gán trạng thái `NEW`.  
+4. 🧑‍🔧 **Agent** nhận xử lý → ticket chuyển `IN_PROGRESS → RESOLVED`.  
+5. ✅ **Admin** giám sát, cập nhật SLA và asset liên quan.  
+6. 🕒 **Scheduler** tự đánh cờ SLA (NEAR/BREACHED) & auto close sau N ngày.  
 
 ---
 
-## 6️⃣ Modules & Mối liên hệ
+## 5️⃣ ERD Tổng quan (Mermaid)
 
-| Module | Vai trò | Liên kết |
-|---------|----------|-----------|
-| **Auth** | Login/logout, session, CSRF | Cần UserRepository |
-| **User** | Lưu user/role/department | Liên kết ticket, asset |
-| **Ticket** | CRUD, comment, status workflow | Liên kết category, asset |
-| **Asset** | CRUD + check-in/out | Liên kết ticket |
-| **SLA** | Deadline, scheduler | Phụ thuộc Ticket |
-| **Common** | Exception, ApiResponse, GlobalError | Toàn hệ thống dùng chung |
+```mermaid
+erDiagram
+  USERS {
+    bigint id PK
+    varchar username
+    varchar email
+    varchar password_hash
+    varchar role
+    boolean is_active
+    boolean must_change_password
+    timestamp created_at
+    timestamp updated_at
+  }
 
----
+  DEPARTMENTS {
+    bigint id PK
+    varchar name
+  }
 
-## 7️⃣ ERD & Workflow
-- **ERD:** `spec/ERD.md`  
-- **Ticket Workflow:** `spec/WORKFLOW.md`  
-- **Asset Workflow:** trong Phase-2  
-- **SLA Scheduler:** trong Phase-3  
+  TICKETS {
+    bigint id PK
+    varchar subject
+    text description
+    varchar status
+    varchar priority
+    bigint reporter_id FK -> USERS.id
+    bigint assignee_id FK -> USERS.id
+    bigint related_asset_id FK -> ASSETS.id
+    bigint category_id FK -> CATEGORIES.id
+    timestamp created_at
+    timestamp updated_at
+    timestamp sla_response_deadline
+    timestamp sla_resolution_deadline
+    varchar sla_flag
+  }
 
----
+  ASSETS {
+    bigint id PK
+    varchar asset_tag
+    varchar type
+    varchar model
+    varchar serial_no
+    varchar status
+    bigint assigned_to FK -> USERS.id
+  }
 
-## 8️⃣ Phase & Milestones
+  ASSET_HISTORY {
+    bigint id PK
+    bigint asset_id FK -> ASSETS.id
+    varchar field
+    varchar old_value
+    varchar new_value
+    bigint changed_by FK -> USERS.id
+    timestamp created_at
+  }
 
-| Phase | Mục tiêu | Mô tả |
-|-------|-----------|-------|
-| **Phase 0** | Auth & RBAC | Session login/logout, role, ownership |
-| **Phase 1** | Ticket | CRUD, comment, status workflow |
-| **Phase 2** | Asset | CRUD, check-in/out, link ticket |
-| **Phase 3** | SLA/Scheduler | Deadline compute, auto-close |
-| **Phase 4** | DevOps & Docs | Dockerfile, compose, Postman, README |
+  TICKET_COMMENTS {
+    bigint id PK
+    bigint ticket_id FK -> TICKETS.id
+    bigint author_id FK -> USERS.id
+    text content
+    boolean is_internal
+    timestamp created_at
+  }
 
-Xem chi tiết từng phase tại `docs/Phases/Phase-*.md`.
+  TICKET_HISTORY {
+    bigint id PK
+    bigint ticket_id FK -> TICKETS.id
+    varchar from_status
+    varchar to_status
+    bigint changed_by FK -> USERS.id
+    text note
+    timestamp created_at
+  }
 
----
+  CATEGORIES {
+    bigint id PK
+    varchar name
+  }
 
-## 9️⃣ Definition of Done (DoD - toàn hệ thống)
-- [ ] Build OK (`mvn clean package`)  
-- [ ] Unit test ≥ 70% coverage service layer  
-- [ ] Integration test chạy qua MockMvc/H2  
-- [ ] REST API trả JSON chuẩn hóa (`ApiResponse<T>`)  
-- [ ] CSRF & session hoạt động đúng  
-- [ ] Docs cập nhật (Overview, ERD, Phase)  
-- [ ] Docker compose chạy được Postgres + app  
-- [ ] Postman collection full flow chạy OK
-
----
-
-## 🔟 ENV & Run
-
-`.env.sample`
+  USERS ||--o{ TICKETS : "reporter_id"
+  USERS ||--o{ TICKETS : "assignee_id"
+  USERS ||--o{ ASSETS : "assigned_to"
+  USERS ||--o{ ASSET_HISTORY : "changed_by"
+  USERS ||--o{ TICKET_HISTORY : "changed_by"
+  USERS ||--o{ TICKET_COMMENTS : "author_id"
 ```
-DB_URL=jdbc:postgresql://localhost:5432/itsm_db
-DB_USER=postgres
-DB_PASS=postgres
-SPRING_PROFILES_ACTIVE=dev
-SERVER_PORT=8080
-```
-
-### Chạy local:
-```bash
-docker compose up -d db
-./mvnw spring-boot:run
-```
-
-### Swagger:
-- `http://localhost:8080/swagger-ui/index.html`
-- `http://localhost:8080/v3/api-docs`
 
 ---
 
-## 🧩 Quy ước dự án (coding convention)
+## 6️⃣ Phân chia Phase
 
-| Mục | Quy tắc |
-|-----|----------|
-| **Packages** | `domain/<feature>/{entity,repository,service,controller,dto}` |
-| **Naming** | Java class PascalCase, DB table snake_case |
-| **DTO** | tách `request` và `response`, dùng Java record |
-| **Response** | `ApiResponse<T> { success, data, message, code? }` |
-| **Errors** | JSON `{ code, message }` — code ví dụ: `AUTH_BAD_CREDENTIALS`, `FORBIDDEN`, `NOT_FOUND` |
-| **Security** | CSRF ON, cookie HttpOnly, SameSite=Lax, Secure=true ở prod |
-| **Testing** | JUnit 5 + Mockito; đặt tên test `given_when_then` |
+| Phase | Tên | Mô tả | Output |
+|--------|------|--------|---------|
+| **Phase 0** | Authentication & RBAC | Login/logout, session, CSRF | `/auth/*`, `/csrf`, `/auth/me` |
+| **Phase 0B** | User Management | Admin CRUD user, reset/self change password | `/users/*` |
+| **Phase 1** | Ticket Core | CRUD ticket, comment, status transition | `/tickets/*` |
+| **Phase 2** | Asset Management | CRUD asset, checkin/out, link ticket | `/assets/*` |
+| **Phase 3** | SLA & Scheduler | SLA compute, flag (NEAR/BREACHED), auto-close | `@Scheduled` jobs |
+| **Phase 4** | DevOps & Docs | Dockerfile, Compose, Postman, CI | `/Dockerfile`, `/docs/*` |
 
 ---
 
-## 🧠 Notes cho AI Agent
-- Ưu tiên đọc `spec/Phases/` trước khi generate code.  
-- Tạo file theo pattern đã định trong Overview.  
-- Không tự thêm framework khác (JWT, OAuth2, Redis, Kafka...).  
-- Code output nên tuân thủ package-by-feature và Spring convention.
+## 7️⃣ Milestones (timeline gợi ý)
+
+| Sprint | Mục tiêu chính | Thời gian ước lượng |
+|---------|----------------|---------------------|
+| Sprint 0 | Auth + RBAC | 2 ngày |
+| Sprint 0B | User CRUD + Password change | 1 ngày |
+| Sprint 1 | Ticket CRUD + Comment + Workflow | 3 ngày |
+| Sprint 2 | Asset CRUD + Checkout/In | 2 ngày |
+| Sprint 3 | SLA & Scheduler | 2 ngày |
+| Sprint 4 | Docker + Docs + Postman | 1 ngày |
+
+---
+
+## 8️⃣ Testing Strategy
+
+| Cấp độ | Mục tiêu | Công cụ |
+|--------|-----------|--------|
+| Unit | Logic nghiệp vụ (service, util) | JUnit 5 |
+| Integration | REST API (MockMvc + H2) | SpringBootTest |
+| Manual | End-to-end (Postman, Browser) | Postman |
+| Optional | CI/CD build | GitHub Actions |
+
+---
+
+## 9️⃣ Deliverables
+
+- 📁 **Source code:** `/backend` (Spring Boot)  
+- 🧩 **Docs:** `/docs/Overview.md`, `/docs/ERD.md`, `/docs/Phases/*.md`  
+- 🧪 **Tests:** `/src/test/java/...`  
+- 🐳 **Docker:** `Dockerfile`, `docker-compose.yml`  
+- 🧭 **Postman Collection:** `ITSM_API.postman_collection.json`
+
+---
+
+## 🔟 Definition of Done (to close project)
+
+- [x] Toàn bộ phase có spec, code, test pass.  
+- [x] App chạy ổn qua `docker compose up`.  
+- [x] Postman test full luồng: login → ticket → asset → SLA → auto close.  
+- [x] README đầy đủ hướng dẫn setup.  
+- [x] GitHub repo public, có tag version.  
+
+---
+
+## 📘 Notes
+- **Không dùng JWT** để giảm độ phức tạp — session login là đủ cho fresher-level.  
+- Tất cả spec được thiết kế để **AI Agent** có thể code tự động theo checklist.  
+- Có thể mở rộng thêm UI (React hoặc Thymeleaf) ở giai đoạn sau.
+
+---

@@ -1,17 +1,23 @@
-# 🚀 Phase 0 — Authentication & RBAC (Session-based)
+# 🚀 Phase 0 — Authentication & RBAC (Session-based)  
+**Version:** v1.1 — Updated for Phase 0B integration
+
+---
 
 ## 0️⃣ Scope
 - Triển khai xác thực **session-based** (không JWT).
 - Cung cấp các endpoint: `/auth/login`, `/auth/logout`, `/auth/me`.
-- Áp dụng **RBAC (ADMIN/AGENT/END_USER)** và **ownership rule** cho tài nguyên.
+- Áp dụng **RBAC (ADMIN / AGENT / END_USER)** và **ownership rule** cho tài nguyên.
 - Bật **CSRF + Security headers**.
-- Seed users, departments, categories.
+- Seed dữ liệu: users (demo), departments, categories.
+- Chuẩn bị nền cho **Phase 0B — User Management** (Admin CRUD + Self password change).
 
 ---
 
 ## 1️⃣ API Contracts
 
 ### 🔹 POST /auth/login
+**Mô tả:** Đăng nhập, tạo session (cookie `JSESSIONID`).
+
 **Request**
 ```json
 {
@@ -25,10 +31,11 @@
 {
   "id": 1,
   "username": "alice",
-  "role": "END_USER"
+  "role": "END_USER",
+  "mustChangePassword": false
 }
 ```
-> Cookie: `JSESSIONID` (HttpOnly, SameSite=Lax, Secure=true nếu HTTPS)
+> Cookie: `JSESSIONID` (HttpOnly, SameSite=Lax, Secure=true ở môi trường HTTPS)
 
 **Response 401**
 ```json
@@ -38,60 +45,73 @@
 ---
 
 ### 🔹 POST /auth/logout
-- Invalidate session.
-- **Response 204 No Content**.
+**Mô tả:** Hủy session hiện tại.  
+**Response:** `204 No Content`
 
 ---
 
 ### 🔹 GET /auth/me
-- Trả thông tin user hiện tại từ session.
+**Mô tả:** Lấy thông tin người dùng hiện tại từ session.  
 **Response 200**
 ```json
-{ "id": 1, "username": "alice", "role": "END_USER" }
+{ "id": 1, "username": "alice", "role": "END_USER", "mustChangePassword": false }
 ```
 **Response 401** nếu chưa đăng nhập.
 
 ---
 
 ### 🔹 GET /csrf
-- Trả về CSRF token để client gửi trong header `X-CSRF-TOKEN`.
+**Mô tả:** Trả về CSRF token để client gửi trong header `X-CSRF-TOKEN` (nếu bật `CookieCsrfTokenRepository`).
 
 ---
 
 ## 2️⃣ Data Model liên quan
-- **USERS**: role, is_active, timestamps.  
-- **DEPARTMENTS**, **CATEGORIES**: seed data.
+- **USERS**
+  - `username`, `email`, `password_hash`, `role`, `is_active`,  
+  - `must_change_password BOOLEAN DEFAULT TRUE` *(bổ sung để hỗ trợ Phase 0B)*  
+  - `created_at`, `updated_at`
+- **DEPARTMENTS**, **CATEGORIES** — seed dữ liệu mẫu.
 
 ---
 
 ## 3️⃣ Tasks & Checklist
 
 ### 🧩 Entity & Repository
-- [x] Hoàn thiện `User` entity (role enum, active=true mặc định, timestamps LocalDateTime).
-- [x] Tạo `UserRepository` (`findByUsername`, `existsByUsername`).
+- [ ] Entity `User`:
+  - field `mustChangePassword` (boolean, default true).
+  - `isActive` (boolean, default true).
+  - `role` enum (`END_USER`, `AGENT`, `ADMIN`).
+- [ ] Repository `UserRepository`:
+  - `findByUsername`, `existsByUsername`, `existsByEmail`.
 
 ### 🔒 Security & Config
-- [x] Cấu hình `SecurityConfig`:
-  - Session-based (STATELESS = ❌).
-  - CSRF ON (CookieCsrfTokenRepository).
-  - Permit `/auth/**`, `/csrf`, `/swagger-ui/**`.
-  - `AuthenticationEntryPoint` 401 JSON.
-  - `AccessDeniedHandler` 403 JSON.
-- [x] Khai báo `PasswordEncoder` = BCrypt.
+- [ ] `SecurityConfig`:
+  - Session-based (STATELESS = ❌)
+  - CSRF ON (`CookieCsrfTokenRepository`)
+  - Permit `/auth/**`, `/csrf`, `/swagger-ui/**`
+  - Custom `AuthenticationEntryPoint` (401 JSON)
+  - Custom `AccessDeniedHandler` (403 JSON)
+- [ ] `PasswordEncoder` = BCrypt.
 
 ### 🧠 Controller & Service
-- [x] `AuthController`: `/auth/login`, `/auth/logout`, `/auth/me`.
-- [x] `AuthService`: login (authenticate), logout (invalidate session).
-- [x] `UserDetailsServiceImpl` (loadUserByUsername).
+- [ ] `AuthController`: `/auth/login`, `/auth/logout`, `/auth/me`
+- [ ] `AuthService`: xác thực, tạo session, trả thông tin user.
+- [ ] `UserDetailsServiceImpl`: nạp user từ DB (Spring Security).
 
 ### 🧱 Seed Data
-- [x] 3 users (`admin`, `agent`, `alice`), mật khẩu BCrypt.
-- [x] Departments: IT, HR.
-- [x] Categories: Hardware, Software, Access.
+- [ ] 3 user mẫu:
+  - `admin / Admin@123` (ADMIN)
+  - `agent / Agent@123` (AGENT)
+  - `alice / Alice@123` (END_USER)
+- [ ] Departments: IT, HR.
+- [ ] Categories: Hardware, Software, Access.
+- [ ] Gán `mustChangePassword=false` cho user seed.
 
 ### 🧰 CSRF & Headers
-- [x] `CookieCsrfTokenRepository` bật; client gửi header `X-CSRF-TOKEN`.
-- [x] Header bảo mật: `X-Frame-Options:DENY`, `X-Content-Type-Options:nosniff`.
+- [ ] `CookieCsrfTokenRepository` bật, client gửi `X-CSRF-TOKEN`.
+- [ ] Header bảo mật:
+  - `X-Frame-Options: DENY`
+  - `X-Content-Type-Options: nosniff`
 
 ---
 
@@ -99,51 +119,68 @@
 
 | Tiêu chí | Mô tả |
 |-----------|-------|
-| ✅ Auth hoạt động | `/auth/login`, `/auth/logout`, `/auth/me` chạy qua Postman (cookie persist) |
+| ✅ Auth hoạt động | `/auth/login`, `/auth/logout`, `/auth/me` chạy OK (cookie persist) |
 | ✅ Session bảo mật | HttpOnly, SameSite=Lax, Secure(true) |
-| ✅ CSRF bật | POST/PATCH/DELETE (trừ /auth/*) cần X-CSRF-TOKEN |
-| ✅ Role & Ownership | ADMIN bỏ qua, AGENT/END_USER bị giới hạn đúng quyền |
-| ✅ Seed dữ liệu | Users + Departments + Categories tạo thành công |
-| ✅ README cập nhật | Hướng dẫn login/logout, CSRF, cookie |
+| ✅ CSRF bật | POST/PATCH/DELETE (trừ `/auth/*`) cần `X-CSRF-TOKEN` |
+| ✅ RBAC | Vai trò đúng, unauthorized trả 403 |
+| ✅ User state | User inactive không thể đăng nhập |
+| ✅ Integration | Chuẩn bị sẵn cho Phase 0B (User CRUD) |
+| ✅ Seed dữ liệu | Users, Departments, Categories sẵn sàng |
 
 ---
 
 ## 5️⃣ Test Plan
 
-### 🔸 Unit Test
+### 🔸 Unit Tests
 | Mục tiêu | Class |
 |-----------|--------|
-| Encode/verify password | `AuthServiceTest` |
+| Password encode/verify | `AuthServiceTest` |
 | Load user details | `UserDetailsServiceImplTest` |
-| EntryPoint & AccessDeniedHandler trả JSON | `SecurityHandlerTest` |
+| EntryPoint & AccessDeniedHandler JSON | `SecurityHandlerTest` |
 
-### 🔸 Integration Test (MockMvc + H2)
-| Trường hợp | Kết quả |
-|-------------|----------|
+### 🔸 Integration (MockMvc + H2)
+| Case | Expect |
+|------|---------|
 | Login đúng | 200 + cookie |
 | Login sai | 401 |
-| GET /auth/me khi login | 200 |
-| GET /auth/me chưa login | 401 |
-| Logout → me | 401 |
-| POST /tickets thiếu CSRF | 403 |
-| POST /tickets có CSRF | 201 |
+| `/auth/me` sau login | 200 |
+| `/auth/me` chưa login | 401 |
+| Logout rồi gọi `/auth/me` | 401 |
+| POST `/tickets` thiếu CSRF | 403 |
+| POST `/tickets` có CSRF | 201 |
+| Login với user inactive | 403 |
 
 ---
 
-## 6️⃣ Out of Scope
-- JWT hoặc Refresh token.
-- Remember-me, 2FA.
-- OAuth2 login.
+## 6️⃣ Integration với Phase 0B — User Management
+
+### 🔗 Liên kết
+- Phase 0B sẽ dùng lại `User` entity và `UserRepository`.
+- API `/users/**` (trừ `/users/change-password`) chỉ ADMIN truy cập.
+- Khi admin tạo user mới:
+  - Set `mustChangePassword=true`
+  - User phải đổi mật khẩu ở lần đăng nhập đầu tiên (sử dụng `/users/change-password`).
+
+### 🔐 Security Rule Bổ sung
+- `/users/change-password` → cho phép tất cả user login.
+- `/users/**` khác → chỉ `ADMIN`.
 
 ---
 
-## 7️⃣ Thứ tự thực thi cho AI Agent
-1. Tạo `User` entity + enum `Role`.
-2. Tạo `UserRepository`.
-3. Cấu hình `SecurityConfig` (session, csrf, handlers).
-4. Viết `UserDetailsServiceImpl` + `AuthService`.
-5. Viết `AuthController` (`/auth/login`, `/auth/logout`, `/auth/me`).
-6. Seed dữ liệu mẫu.
-7. Test qua Postman & MockMvc.
+## 7️⃣ Out of Scope
+- JWT / Refresh token.
+- Remember-me.
+- OAuth2 / SSO.
+
+---
+
+## 8️⃣ Thứ tự thực thi cho AI Agent
+1. Tạo `User` entity (+ role, isActive, mustChangePassword).  
+2. Repository + seed dữ liệu mẫu.  
+3. Cấu hình `SecurityConfig` (session, csrf, handlers).  
+4. Implement `AuthService` + `UserDetailsServiceImpl`.  
+5. Controller `/auth/login`, `/auth/logout`, `/auth/me`.  
+6. Test integration qua Postman (cookie persist).  
+7. Chuẩn bị cho Phase 0B (ADMIN CRUD + password change).  
 
 ---
