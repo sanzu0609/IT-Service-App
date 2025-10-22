@@ -237,9 +237,9 @@ NEW → IN_PROGRESS → RESOLVED → CLOSED
 - [x] `/tickets/{id}/status`
 
 ### 🔒 Security
-- [ ] Ownership guard (user chỉ xem ticket của mình)  
-- [ ] Role guard (`@PreAuthorize`)  
-- [ ] Validation (subject ≥ 5, description ≥ 10)
+- [x] Ownership guard (user chỉ xem ticket của mình)  
+- [x] Role guard (`@PreAuthorize`)  
+- [x] Validation (subject ≥ 5, description ≥ 10)
 
 ---
 

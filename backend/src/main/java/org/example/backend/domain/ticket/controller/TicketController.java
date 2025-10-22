@@ -29,6 +29,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -55,6 +56,7 @@ public class TicketController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('END_USER','ADMIN')")
     public ResponseEntity<TicketSummaryResponse> createTicket(
             Authentication authentication,
             @Valid @RequestBody CreateTicketRequest request
@@ -76,6 +78,7 @@ public class TicketController {
     }
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public Page<TicketSummaryResponse> listTickets(
             Authentication authentication,
             @RequestParam(value = "status", required = false) TicketStatus status,
@@ -89,6 +92,7 @@ public class TicketController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public TicketDetailResponse getTicket(@PathVariable Long id, Authentication authentication) {
         AuthUserDetails actor = AuthControllerUtils.requirePrincipal(authentication);
         Ticket ticket = ticketService.getTicket(id, actor);
@@ -97,6 +101,7 @@ public class TicketController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
     public TicketDetailResponse updateTicket(
             @PathVariable Long id,
             Authentication authentication,
@@ -115,6 +120,7 @@ public class TicketController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteTicket(@PathVariable Long id, Authentication authentication) {
         AuthUserDetails actor = AuthControllerUtils.requirePrincipal(authentication);
         ticketService.deleteTicket(id, actor);
@@ -122,6 +128,7 @@ public class TicketController {
     }
 
     @PostMapping("/{id}/comments")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<TicketDetailResponse.CommentResponse> addComment(
             @PathVariable Long id,
             Authentication authentication,
@@ -134,6 +141,7 @@ public class TicketController {
     }
 
     @GetMapping("/{id}/comments")
+    @PreAuthorize("isAuthenticated()")
     public List<TicketDetailResponse.CommentResponse> listComments(
             @PathVariable Long id,
             Authentication authentication
@@ -147,6 +155,7 @@ public class TicketController {
     }
 
     @PostMapping("/{id}/status")
+    @PreAuthorize("isAuthenticated()")
     public TicketDetailResponse changeStatus(
             @PathVariable Long id,
             Authentication authentication,
