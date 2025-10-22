@@ -1,28 +1,31 @@
-# 🧰 Phase 4 — DevOps & Documentation (Docker, Compose, Postman, CI)
-
-## 0️⃣ Scope
-- Đóng gói ứng dụng **Spring Boot** bằng Docker.
-- Dựng **docker-compose** chạy **Postgres + App** (profile `dev`).
-- Chuẩn hóa **ENV** (`.env.sample`) và runbook trong **README**.
-- Tạo **Postman Collection** cho toàn bộ luồng.
-- (Optional) **GitHub Actions CI**: build + test + badge.
+# 🧰 Phase 3 — DevOps & Documentation (Docker, Compose, Postman, CI)
+**Version:** v1.2 — Simplified (No Asset Module)
 
 ---
 
-## 1️⃣ Artifacts cần bàn giao
-- `Dockerfile` (JDK 21, JAR layer caching).
+## 0️⃣ Scope
+- Đóng gói ứng dụng **Spring Boot** (Java 21) bằng Docker.
+- Dựng **docker-compose** chạy **Postgres + App** (profile `dev`).
+- Chuẩn hóa **ENV** (`.env.sample`) và runbook trong **README**.
+- Tạo **Postman Collection** cho các luồng còn lại (Auth, Users, Tickets, SLA).
+- (Optional) **GitHub Actions CI**: build + test + badge.
+
+> Gỡ toàn bộ references tới Asset module.
+
+---
+
+## 1️⃣ Artifacts bàn giao
+- `Dockerfile` (multi-stage).
 - `docker-compose.yml` (services: `db`, `app`).
-- `.env.sample` (DB_URL, DB_USER, DB_PASS, SERVER_PORT, SPRING_PROFILES_ACTIVE).
+- `.env.sample` (DB & server config).
 - `README.md` (Quickstart, ENV, Docker, Swagger links).
-- `POSTMAN_COLLECTION.json` (Auth, Ticket, Asset, SLA).
+- `POSTMAN_COLLECTION.json` (Auth, User, Ticket, SLA).
 - `.github/workflows/ci.yml` (build & test) — optional.
 - (Optional) `Makefile` tiện chạy lệnh.
 
 ---
 
 ## 2️⃣ Dockerfile (spec)
-> Multi-stage build để giảm size; bật JVM options hợp lý cho dev.
-
 ```dockerfile
 # ===== Build stage =====
 FROM maven:3.9-eclipse-temurin-21 AS build
@@ -39,17 +42,13 @@ COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /app/app.jar"]
 ```
-
 **Checklist**
-- [ ] Không copy `.mvnw` vào image run.
-- [ ] Dùng JRE base image cho stage run.
-- [ ] `JAVA_OPTS` có thể override ở compose.
+- [ ] Build OK locally (`mvn -DskipTests=true clean package`).
+- [ ] Image run size gọn (JRE base).
 
 ---
 
 ## 3️⃣ docker-compose.yml (spec)
-> Chạy Postgres + App. Dùng network nội bộ, mount volume cho DB.
-
 ```yaml
 version: "3.9"
 services:
@@ -84,17 +83,13 @@ services:
       SERVER_PORT: ${SERVER_PORT:-8080}
     ports:
       - "${SERVER_PORT:-8080}:8080"
-    # Optional: add JVM opts
-    # environment:
-    #   JAVA_OPTS: "-Xms256m -Xmx512m"
 
 volumes:
   db_data:
 ```
-
 **Checklist**
-- [ ] `depends_on` healthcheck để app chờ DB sẵn sàng.
-- [ ] Port map 5432 & 8080 config qua ENV.
+- [ ] `depends_on` healthcheck.
+- [ ] Port map từ ENV.
 
 ---
 
@@ -110,25 +105,24 @@ DB_PORT=5432
 SPRING_PROFILES_ACTIVE=dev
 SERVER_PORT=8080
 ```
-
-> **Lưu ý:** Commit file `.env.sample`, **không** commit `.env` thật.
+> Commit `.env.sample`, **không commit** `.env` thật.
 
 ---
 
 ## 5️⃣ README.md — Quickstart (spec)
 Nội dung cần có:
-1. **Giới thiệu project** + link đến `docs/Overview.md`, `docs/ERD.md`, `docs/Phases/`.
+1. **Giới thiệu** + link `docs/Overview.md`, `docs/ERD.md`, `docs/Phases/`.
 2. **Yêu cầu môi trường:** Docker, Maven, JDK 21.
 3. **Chạy nhanh**:
    ```bash
    cp .env.sample .env
    docker compose up -d db
    ./mvnw spring-boot:run
-   # hoặc build image & compose cả app
+   # Hoặc build image & compose cả app
    docker compose up --build
    ```
 4. **Swagger**: `http://localhost:8080/swagger-ui/index.html`
-5. **Postman Collection**: cách import `POSTMAN_COLLECTION.json`.
+5. **Postman Collection**: import `POSTMAN_COLLECTION.json`.
 6. **Seed users**: admin/agent/alice (ghi rõ user/pass).
 7. **Troubleshooting**: DB connection, port bị chiếm, clean volume:
    ```bash
@@ -139,21 +133,22 @@ Nội dung cần có:
 
 ## 6️⃣ Postman Collection (spec)
 Folders đề xuất:
-- `Auth/` → Login, Me, Logout
-- `Tickets/` → Create, List, Get, Patch, Comment, Status
-- `Assets/` → Create, List, Get, Patch, Checkout, Checkin, History
-- `SLA/` → (verify fields & flags)
+- `Auth/` → Login, Me, Logout, CSRF
+- `Users/` → Create, List, Get, Update, Reset Password, Self Change Password
+- `Tickets/` → Create, List, Get, Patch, Delete, Comment Add/List, Status Change
+- `SLA/` → Verify fields & run checker (manual)
 
-**Checklist**
-- [ ] Set **Base URL** = `{{base_url}}` (env variable).  
-- [ ] Bật **cookie persist** cho session.  
-- [ ] Với POST/PATCH/DELETE (trừ `/auth/*`), gửi `X-CSRF-TOKEN` (nếu dùng CookieCsrfTokenRepository → lấy từ `/csrf`).
+**Environment variables**
+- `base_url` = `http://localhost:8080`
+- `csrf_token` (nếu dùng CookieCsrfTokenRepository → GET `/csrf` trước)
+
+**Scripts gợi ý**
+- Tests: assert status code, JSON schema (basic).
 
 ---
 
-## 7️⃣ GitHub Actions CI (optional spec)
-Workflow `.github/workflows/ci.yml`:
-
+## 7️⃣ GitHub Actions CI (optional)
+`.github/workflows/ci.yml`:
 ```yaml
 name: CI
 on:
@@ -176,17 +171,16 @@ jobs:
       - name: Build & Test
         run: ./mvnw -B -DskipTests=false test
 ```
-
 **Checklist**
-- [ ] Cache Maven để tốc độ nhanh.  
-- [ ] PR hiển thị pass/fail.  
-- [ ] (Optional) thêm badge vào README.
+- [ ] Cache Maven.
+- [ ] PR hiển thị pass/fail.
+- [ ] (Optional) badge trạng thái vào README.
 
 ---
 
 ## 8️⃣ Makefile (optional)
 ```Makefile
-.PHONY: dev-up dev-down build run test seed
+.PHONY: dev-up dev-down build run test
 
 dev-up:
 	docker compose up -d db
@@ -207,14 +201,12 @@ test:
 ---
 
 ## 9️⃣ Tasks & Checklist
-
-- [ ] Viết `Dockerfile` multi-stage và build OK.
-- [ ] Viết `docker-compose.yml` chạy `db` + `app` bằng ENV.
-- [ ] Thêm `.env.sample` & hướng dẫn tạo `.env`.
-- [ ] Cập nhật `README.md` Quickstart + Troubleshooting.
-- [ ] Tạo `POSTMAN_COLLECTION.json` (các folder/requests đầy đủ).
-- [ ] (Optional) Thêm CI workflow `ci.yml`.
-- [ ] (Optional) Makefile tiện thao tác.
+- [ ] Dockerfile multi-stage build OK.
+- [ ] compose chạy `db` + `app` với ENV.
+- [ ] `.env.sample` & README Quickstart.
+- [ ] Postman collection **không có Asset**.
+- [ ] (Optional) CI workflow.
+- [ ] (Optional) Makefile.
 
 ---
 
@@ -223,23 +215,23 @@ test:
 |---------|------|
 | ✅ Dockerfile | Build image thành công, app chạy |
 | ✅ Compose | `docker compose up` chạy được DB + App |
-| ✅ ENV | `.env.sample` rõ ràng; `.env` được ignore |
-| ✅ Docs | README + link đến `docs/` đầy đủ |
-| ✅ Postman | Import được collection, chạy end-to-end |
-| ✅ CI | (Optional) CI build & test chạy pass |
+| ✅ ENV | `.env.sample` rõ ràng; `.env` ignored |
+| ✅ Docs | README + link `docs/` đầy đủ |
+| ✅ Postman | Import collection, chạy end-to-end |
+| ✅ CI | (Optional) CI build & test pass |
 
 ---
 
-## 1️⃣1️⃣ Test Plan (Manual)
-- [ ] `docker compose up --build` → App reachable at `:8080`.
-- [ ] Swagger mở được; `/auth/login` → set cookie; `/auth/me` trả user.
-- [ ] Tạo ticket, đổi status, add comment, link asset → OK.
-- [ ] Asset checkout/in → history ghi lại.
-- [ ] SLA job cập nhật flag (mock clock nếu có).
+## 1️⃣1️⃣ Manual Test Plan
+- [ ] `docker compose up --build` → App chạy `:8080`.
+- [ ] Swagger mở được; `/auth/login` → session cookie; `/auth/me` trả user.
+- [ ] Users: admin tạo user mới, reset & self change password.
+- [ ] Tickets: create → assign → in_progress → resolved → (auto) closed.
+- [ ] SLA: verify deadline fields, checker/auto-close chạy (thủ công hoặc mock).
 
 ---
 
 ## 1️⃣2️⃣ Out of Scope
-- CD/Deploy lên cloud (k8s, ECS).  
-- Secrets manager (Vault, SSM).  
-- Observability nâng cao (Prometheus, Grafana, ELK).
+- Deploy cloud/Kubernetes.
+- Secrets manager (Vault, SSM).
+- Observability nâng cao (Prometheus/Grafana/ELK).

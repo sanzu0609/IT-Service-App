@@ -1,20 +1,15 @@
-# 🧩 ITSM Mini Clone — ERD Specification  
-**Version:** v1.1 — Updated for Phase 0B integration  
+# 🧩 ITSM Mini Clone — ERD Specification
+**Version:** v1.2 — Simplified (No Asset Module)
 
 ---
 
-## 1️⃣ Overview
-
-Sơ đồ ERD mô tả cấu trúc cơ sở dữ liệu của hệ thống ITSM Mini, bao gồm các module:  
-- **User & Department** (Phase 0, 0B)  
-- **Ticket System** (Phase 1)  
-- **Asset Management** (Phase 2)  
-- **SLA & Workflow** (Phase 3)  
+## 1) Overview
+Bản ERD rút gọn cho scope Fresher: **Auth/User**, **Ticket**, **SLA**.  
+Đã **bỏ Asset Management**. Cột `related_asset_id` được giữ lại **dạng tham chiếu lỏng** (không FK) để mở rộng sau.
 
 ---
 
-## 2️⃣ ER Diagram (Mermaid)
-
+## 2) ER Diagram (Mermaid)
 ```mermaid
 erDiagram
   USERS {
@@ -35,8 +30,14 @@ erDiagram
     varchar name
   }
 
+  CATEGORIES {
+    bigint id PK
+    varchar name
+  }
+
   TICKETS {
     bigint id PK
+    varchar ticket_number
     varchar subject
     text description
     varchar status
@@ -44,9 +45,11 @@ erDiagram
     bigint reporter_id FK -> USERS.id
     bigint assignee_id FK -> USERS.id
     bigint category_id FK -> CATEGORIES.id
-    bigint related_asset_id FK -> ASSETS.id
+    bigint related_asset_id  "optional, no FK"
     timestamp created_at
     timestamp updated_at
+    timestamp resolved_at
+    timestamp closed_at
     timestamp sla_response_deadline
     timestamp sla_resolution_deadline
     varchar sla_flag
@@ -71,191 +74,76 @@ erDiagram
     timestamp created_at
   }
 
-  CATEGORIES {
-    bigint id PK
-    varchar name
-  }
-
-  ASSETS {
-    bigint id PK
-    varchar asset_tag
-    varchar type
-    varchar model
-    varchar serial_no
-    varchar status
-    bigint assigned_to FK -> USERS.id
-    text notes
-    timestamp created_at
-    timestamp updated_at
-  }
-
-  ASSET_HISTORY {
-    bigint id PK
-    bigint asset_id FK -> ASSETS.id
-    varchar field
-    varchar old_value
-    varchar new_value
-    bigint changed_by FK -> USERS.id
-    text note
-    timestamp created_at
-  }
-
+  DEPARTMENTS ||--o{ USERS : "1-N"
   USERS ||--o{ TICKETS : "reporter_id"
   USERS ||--o{ TICKETS : "assignee_id"
-  USERS ||--o{ ASSETS : "assigned_to"
-  USERS ||--o{ ASSET_HISTORY : "changed_by"
-  USERS ||--o{ TICKET_HISTORY : "changed_by"
   USERS ||--o{ TICKET_COMMENTS : "author_id"
-  DEPARTMENTS ||--o{ USERS : "1-N"
+  USERS ||--o{ TICKET_HISTORY : "changed_by"
   CATEGORIES ||--o{ TICKETS : "1-N"
-  ASSETS ||--o{ ASSET_HISTORY : "1-N"
 ```
+> Lưu ý: `related_asset_id` **không có FK** trong phiên bản này.
 
 ---
 
-## 3️⃣ Entity chi tiết
+## 3) Bảng & Trường (tóm tắt)
 
 ### 👤 USERS
-| Trường | Kiểu | Ghi chú |
-|--------|------|---------|
-| id | bigint | Primary key |
-| username | varchar | Unique |
-| email | varchar | Unique |
-| password_hash | varchar | Bcrypt |
-| role | enum(`ADMIN`,`AGENT`,`END_USER`) | RBAC |
-| is_active | boolean | Cho phép đăng nhập |
-| must_change_password | boolean | Bắt buộc đổi mật khẩu sau khi reset/tạo mới |
-| department_id | FK → DEPARTMENTS.id | Phòng ban |
-| created_at / updated_at | timestamp | Audit fields |
-
----
+- `id (PK)`, `username*`, `email*`, `password_hash`, `role {ADMIN|AGENT|END_USER}`  
+- `is_active (default true)`, `must_change_password (default true)`  
+- `department_id (FK → DEPARTMENTS.id, nullable)`  
+- `created_at`, `updated_at`
 
 ### 🏢 DEPARTMENTS
-| Trường | Kiểu | Ghi chú |
-|--------|------|---------|
-| id | bigint | PK |
-| name | varchar | Tên phòng ban |
+- `id (PK)`, `name*`
 
----
+### 🗂 CATEGORIES
+- `id (PK)`, `name*`
 
 ### 🎫 TICKETS
-| Trường | Kiểu | Ghi chú |
-|--------|------|---------|
-| id | bigint | PK |
-| subject | varchar | Tiêu đề yêu cầu |
-| description | text | Nội dung |
-| status | enum(`NEW`,`IN_PROGRESS`,`ON_HOLD`,`RESOLVED`,`CLOSED`,`CANCELLED`,`REOPENED`) | Trạng thái |
-| priority | enum(`LOW`,`MEDIUM`,`HIGH`,`CRITICAL`) | Độ ưu tiên |
-| reporter_id | FK → USERS.id | Người tạo |
-| assignee_id | FK → USERS.id | Người xử lý |
-| category_id | FK → CATEGORIES.id | Phân loại |
-| related_asset_id | FK → ASSETS.id | Tài sản liên quan |
-| sla_response_deadline | timestamp | Hạn phản hồi |
-| sla_resolution_deadline | timestamp | Hạn xử lý |
-| sla_flag | enum(`OK`,`NEAR`,`BREACHED`) | Trạng thái SLA |
-| created_at / updated_at | timestamp | Audit fields |
-
----
+- `id (PK)`, `ticket_number*`, `subject`, `description`  
+- `status {NEW|IN_PROGRESS|ON_HOLD|RESOLVED|CLOSED|REOPENED|CANCELLED}`  
+- `priority {LOW|MEDIUM|HIGH|CRITICAL}`  
+- `reporter_id (FK → USERS.id)`, `assignee_id (FK → USERS.id, nullable)`  
+- `category_id (FK → CATEGORIES.id)`  
+- `related_asset_id (nullable, **no FK**)`  
+- `sla_response_deadline`, `sla_resolution_deadline`, `sla_flag {OK|NEAR|BREACHED}`  
+- `created_at`, `updated_at`, `resolved_at?`, `closed_at?`
 
 ### 💬 TICKET_COMMENTS
-| Trường | Kiểu | Ghi chú |
-|--------|------|---------|
-| id | bigint | PK |
-| ticket_id | FK → TICKETS.id | Ticket liên quan |
-| author_id | FK → USERS.id | Người bình luận |
-| content | text | Nội dung |
-| is_internal | boolean | Bình luận nội bộ (chỉ Agent/Admin xem) |
-| created_at | timestamp | Thời gian tạo |
-
----
+- `id (PK)`, `ticket_id (FK → TICKETS.id)`, `author_id (FK → USERS.id)`  
+- `content`, `is_internal (default false)`, `created_at`
 
 ### 📜 TICKET_HISTORY
-| Trường | Kiểu | Ghi chú |
-|--------|------|---------|
-| id | bigint | PK |
-| ticket_id | FK → TICKETS.id | Ticket |
-| from_status | varchar | Từ trạng thái |
-| to_status | varchar | Sang trạng thái |
-| changed_by | FK → USERS.id | Người thay đổi |
-| note | text | Ghi chú |
-| created_at | timestamp | Thời gian thay đổi |
+- `id (PK)`, `ticket_id (FK → TICKETS.id)`, `from_status`, `to_status`, `changed_by (FK → USERS.id)`  
+- `note?`, `created_at`
 
 ---
 
-### 🗂️ CATEGORIES
-| Trường | Kiểu | Ghi chú |
-|--------|------|---------|
-| id | bigint | PK |
-| name | varchar | Tên nhóm (VD: Hardware, Software, Access) |
+## 4) Indexes & Constraints (đề xuất)
+
+- **USERS**: `username UNIQUE`, `email UNIQUE`, `department_id` (FK)  
+- **TICKETS**: `ticket_number UNIQUE`, `(status, assignee_id)`, `reporter_id`, `created_at DESC`  
+- **COMMENTS**: `(ticket_id, created_at)`  
+- **HISTORY**: `(ticket_id, created_at)`
 
 ---
 
-### 🧳 ASSETS
-| Trường | Kiểu | Ghi chú |
-|--------|------|---------|
-| id | bigint | PK |
-| asset_tag | varchar | Unique tag (VD: LAP-000123) |
-| type | varchar | Loại tài sản |
-| model | varchar | Model |
-| serial_no | varchar | Số serial |
-| status | enum(`AVAILABLE`,`IN_USE`,`MAINTENANCE`,`RETIRED`) | Trạng thái |
-| assigned_to | FK → USERS.id | Người đang sử dụng |
-| notes | text | Mô tả |
-| created_at / updated_at | timestamp | Audit fields |
+## 5) Enum Domains
+- `User.role`: `ADMIN`, `AGENT`, `END_USER`  
+- `Ticket.status`: `NEW`, `IN_PROGRESS`, `ON_HOLD`, `RESOLVED`, `CLOSED`, `REOPENED`, `CANCELLED`  
+- `Ticket.priority`: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`  
+- `Ticket.sla_flag`: `OK`, `NEAR`, `BREACHED`
 
 ---
 
-### 🧾 ASSET_HISTORY
-| Trường | Kiểu | Ghi chú |
-|--------|------|---------|
-| id | bigint | PK |
-| asset_id | FK → ASSETS.id | Asset liên quan |
-| field | varchar | Tên trường thay đổi |
-| old_value | varchar | Giá trị cũ |
-| new_value | varchar | Giá trị mới |
-| changed_by | FK → USERS.id | Người thao tác |
-| note | text | Ghi chú (VD: “check-in từ agent”) |
-| created_at | timestamp | Thời gian |
+## 6) Change Log
+- **v1.2 (2025-10-22)** — Loại bỏ bảng `ASSETS`, `ASSET_HISTORY`; giữ `related_asset_id` (no FK).  
+- v1.1 — Thêm `users.must_change_password`.  
+- v1.0 — Bản ERD khởi tạo.
 
 ---
 
-## 4️⃣ Index & Constraint đề xuất
-| Bảng | Cột | Mục đích |
-|------|------|----------|
-| USERS | username, email | unique |
-| USERS | department_id | FK |
-| TICKETS | reporter_id, assignee_id | FK |
-| TICKETS | status, priority | filter |
-| ASSETS | asset_tag | unique |
-| ASSET_HISTORY | asset_id | lookup |
-| TICKET_HISTORY | ticket_id | lookup |
-| TICKET_COMMENTS | ticket_id | lookup |
-
----
-
-## 5️⃣ Relationship Summary
-- 1 `Department` → N `Users`  
-- 1 `User` → N `Tickets` (reporter/assignee)  
-- 1 `Ticket` → N `TicketComments`, `TicketHistory`  
-- 1 `Asset` → N `AssetHistory`  
-- 1 `User` → N `AssetHistory`, `TicketHistory`, `TicketComments`  
-- 1 `Category` → N `Tickets`
-
----
-
-## 6️⃣ Change Log
-| Phiên bản | Ngày | Mô tả thay đổi |
-|------------|------|----------------|
-| v1.0 | 2025-10-10 | ERD khởi tạo |
-| **v1.1** | 2025-10-22 | Thêm `must_change_password` vào bảng USERS (Phase 0B), cập nhật liên kết Users–Departments, tinh gọn quan hệ Ticket–Asset |
-
----
-
-## 7️⃣ Ghi chú thiết kế
-- Trường `must_change_password` phục vụ cho việc reset/tạo tài khoản mới ở **Phase 0B**.  
-- Các `timestamp` lưu theo UTC.  
-- Không cần bảng SLA riêng — lưu trong `TICKETS`.  
-- `status`, `priority`, `sla_flag` dùng enum cố định.  
-- Các bảng có `created_at`, `updated_at` dùng auto timestamp (JPA Auditing).  
-
----
+## 7) Ghi chú
+- Khuyến nghị dùng **JPA Auditing** cho `created_at/updated_at`.  
+- `ticket_number` có thể sinh theo format: `ITSM-YYYY-####`.  
+- Khi muốn khôi phục Asset module sau này, chỉ cần tạo bảng `ASSETS` và thêm FK cho `related_asset_id`.
