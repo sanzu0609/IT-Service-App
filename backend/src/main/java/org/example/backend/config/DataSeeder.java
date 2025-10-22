@@ -68,7 +68,7 @@ public class DataSeeder implements CommandLineRunner {
                 "admin",
                 "admin@example.com",
                 "Admin User",
-                "admin123",
+                "Admin@123",
                 UserRole.ADMIN,
                 departmentIds.get("IT")
         );
@@ -77,7 +77,7 @@ public class DataSeeder implements CommandLineRunner {
                 "agent",
                 "agent@example.com",
                 "Agent Smith",
-                "agent123",
+                "Agent@123",
                 UserRole.AGENT,
                 departmentIds.get("IT")
         );
@@ -86,7 +86,7 @@ public class DataSeeder implements CommandLineRunner {
                 "alice",
                 "alice@example.com",
                 "Alice Johnson",
-                "alice123",
+                "Alice@123",
                 UserRole.END_USER,
                 departmentIds.get("HR")
         );
@@ -100,12 +100,16 @@ public class DataSeeder implements CommandLineRunner {
             UserRole role,
             Long departmentId
     ) {
-        if (departmentId == null || userRepository.existsByUsername(username)) {
+        if (departmentId == null
+                || userRepository.existsByUsername(username)
+                || userRepository.existsByEmail(email)) {
             return;
         }
 
         String encodedPassword = passwordEncoder.encode(rawPassword);
         User user = new User(username, email, encodedPassword, fullName, role, departmentId);
+        user.setMustChangePassword(false);
+        user.setActive(true);
         userRepository.save(user);
     }
 }
