@@ -221,9 +221,9 @@ NEW → IN_PROGRESS → RESOLVED → CLOSED
 ## 4️⃣ Checklist
 
 ### 🧱 Entity + Repository
-- [ ] Ticket, TicketComment, TicketHistory, Category
-- [ ] Repository CRUD + filter (status, priority, assignee, createdAt DESC)
-- [ ] Generator `ticketNumber`
+- [x] Ticket, TicketComment, TicketHistory, Category
+- [x] Repository CRUD + filter (status, priority, assignee, createdAt DESC)
+- [x] Generator `ticketNumber`
 
 ### 🔧 Service Layer
 - [ ] `TicketService` — CRUD, assign, status change, generate number  
