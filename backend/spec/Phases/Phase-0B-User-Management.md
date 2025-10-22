@@ -1,4 +1,4 @@
-﻿# 👥 Phase 0B — User Management (Admin CRUD + Self Password Change)
+# 👥 Phase 0B — User Management (Admin CRUD + Self Password Change)
 
 ## 0️⃣ Scope
 - Cho **ADMIN** quản lý người dùng: tạo, xem danh sách, xem chi tiết, cập nhật profile/role/department, **activate/deactivate**, **reset password**.
@@ -147,8 +147,8 @@
 - [x] `POST /users/change-password` (self)
 
 ### 🧪 Testing
-- [ ] Unit: create user (unique), reset & change password policy, guards (admin cuối cùng).
-- [ ] Integration: list/filter/pagination, update role/dept, self change password.
+- [x] Unit: create user (unique), reset & change password policy, guards (admin cuối cùng).
+- [x] Integration: list/filter/pagination, update role/dept, self change password.
 
 ---
 
