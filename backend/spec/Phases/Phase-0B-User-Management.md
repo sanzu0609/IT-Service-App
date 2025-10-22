@@ -139,12 +139,12 @@
 - [ ] CSRF áp dụng với POST/PATCH.
 
 ### 📄 Controller
-- [ ] `POST /users`
-- [ ] `GET /users`
-- [ ] `GET /users/{id}`
-- [ ] `PATCH /users/{id}`
-- [ ] `POST /users/{id}/reset-password`
-- [ ] `POST /users/change-password` (self)
+- [x] `POST /users`
+- [x] `GET /users`
+- [x] `GET /users/{id}`
+- [x] `PATCH /users/{id}`
+- [x] `POST /users/{id}/reset-password`
+- [x] `POST /users/change-password` (self)
 
 ### 🧪 Testing
 - [ ] Unit: create user (unique), reset & change password policy, guards (admin cuối cùng).
