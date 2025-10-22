@@ -1,3 +1,4 @@
+
 package org.example.backend.domain.ticket.service;
 
 import jakarta.persistence.EntityNotFoundException;

@@ -1,12 +1,12 @@
-package org.example.backend.domain.ticket.service;
+package org.example.backend.domain.ticket.dto.request;
 
 import org.example.backend.domain.ticket.enums.TicketPriority;
 
-public record UpdateTicketCommand(
+public record UpdateTicketRequest(
         Long assigneeId,
         TicketPriority priority,
         Long categoryId,
-        boolean clearRelatedAsset,
+        Boolean clearRelatedAsset,
         Long relatedAssetId
 ) {
 }

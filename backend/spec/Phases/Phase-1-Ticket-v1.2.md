@@ -232,9 +232,9 @@ NEW → IN_PROGRESS → RESOLVED → CLOSED
 - [x] `TicketHistoryService` — ghi log tự động
 
 ### 🚦 Controller
-- [ ] `/tickets` CRUD  
-- [ ] `/tickets/{id}/comments`  
-- [ ] `/tickets/{id}/status`
+- [x] `/tickets` CRUD  
+- [x] `/tickets/{id}/comments`  
+- [x] `/tickets/{id}/status`
 
 ### 🔒 Security
 - [ ] Ownership guard (user chỉ xem ticket của mình)  

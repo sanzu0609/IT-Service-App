@@ -1,3 +1,4 @@
+
 package org.example.backend.domain.ticket.service;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -49,6 +50,7 @@ public class TicketService {
 
     public Ticket createTicket(CreateTicketCommand command, AuthUserDetails reporterDetails) {
         validateCreateCommand(command);
+        ensureCreateAllowed(reporterDetails);
 
         User reporter = userRepository.findById(reporterDetails.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Reporter not found"));
@@ -66,8 +68,7 @@ public class TicketService {
         ticket.setRelatedAssetId(command.relatedAssetId());
         ticket.setTicketNumber(ticketNumberGenerator.nextTicketNumber());
 
-        ticketRepository.save(ticket);
-        return ticket;
+        return ticketRepository.save(ticket);
     }
 
     @Transactional(readOnly = true)
@@ -76,7 +77,7 @@ public class TicketService {
                 filter.status(),
                 filter.priority(),
                 filter.assigneeId(),
-                isEndUser(actor) ? actor.getId() : null
+                actor.getRole() == UserRole.END_USER ? actor.getId() : null
         );
         return ticketRepository.findAll(spec, pageable);
     }
@@ -104,7 +105,9 @@ public class TicketService {
             ticket.setCategory(category);
         }
 
-        if (command.relatedAssetProvided()) {
+        if (command.clearRelatedAsset()) {
+            ticket.setRelatedAssetId(null);
+        } else if (command.relatedAssetId() != null) {
             ticket.setRelatedAssetId(command.relatedAssetId());
         }
 
@@ -167,6 +170,12 @@ public class TicketService {
         }
     }
 
+    private void ensureCreateAllowed(AuthUserDetails actor) {
+        if (actor.getRole() != UserRole.END_USER && actor.getRole() != UserRole.ADMIN) {
+            throw new IllegalStateException("Only end user or admin can create tickets");
+        }
+    }
+
     private void ensureCanView(Ticket ticket, AuthUserDetails actor) {
         if (actor.getRole() == UserRole.END_USER && !ticket.getReporter().getId().equals(actor.getId())) {
             throw new IllegalStateException("You do not have access to this ticket");
@@ -193,9 +202,5 @@ public class TicketService {
         if (actor.getRole() != UserRole.ADMIN && actor.getRole() != UserRole.AGENT) {
             throw new IllegalStateException("Only agent or admin can perform this action");
         }
-    }
-
-    private boolean isEndUser(AuthUserDetails actor) {
-        return actor.getRole() == UserRole.END_USER;
     }
 }
