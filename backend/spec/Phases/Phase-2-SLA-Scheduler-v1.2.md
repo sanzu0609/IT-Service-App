@@ -79,25 +79,25 @@ app.sla.autoclose.days=7
 ## 5️⃣ Tasks & Checklist
 
 ### ⚙️ Service & Scheduler
-- [ ] `SlaService` tính deadline từ priority map.
-- [ ] `SlaScheduler` gồm 2 job: checker & auto-close.
-- [ ] `TicketService` gọi `SlaService` khi create/đổi priority.
-- [ ] Ghi `TicketHistory` khi auto-close.
+- [x] `SlaService` tính deadline từ priority map.
+- [x] `SlaScheduler` gồm 2 job: checker & auto-close.
+- [x] `TicketService` gọi `SlaService` khi create/đổi priority.
+- [x] Ghi `TicketHistory` khi auto-close.
 
 ### 🧩 Config & Infra
-- [ ] `@EnableScheduling` trong main app.
-- [ ] `application.properties` thêm `app.sla.autoclose.days=7`.
+- [x] `@EnableScheduling` trong main app.
+- [x] `application.properties` thêm `app.sla.autoclose.days=7`.
 
 ### 🧠 Utility
-- [ ] Enum `SlaFlag { OK, NEAR, BREACHED }`.
-- [ ] Helper tính phần trăm thời gian đã dùng.
+- [x] Enum `SlaFlag { OK, NEAR, BREACHED }`.
+- [x] Helper tính phần trăm thời gian đã dùng.
 
 ### 🔒 Guard (không bắt buộc)
 - [ ] Bỏ qua ticket của `reporter` **inactive** (nếu chính sách yêu cầu).
 
 ### 🧪 Testing
-- [ ] Unit: mapping priority → deadline; flag transitions.
-- [ ] Integration: mock clock để test checker & auto-close.
+- [x] Unit: mapping priority → deadline; flag transitions.
+- [x] Integration: mock clock để test checker & auto-close.
 
 ---
 
