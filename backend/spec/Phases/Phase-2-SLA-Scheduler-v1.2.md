@@ -96,8 +96,8 @@ app.sla.autoclose.days=7
 - [ ] Bỏ qua ticket của `reporter` **inactive** (nếu chính sách yêu cầu).
 
 ### 🧪 Testing
-- [ ] Unit: mapping priority → deadline; flag transitions.
-- [ ] Integration: mock clock để test checker & auto-close.
+- [x] Unit: mapping priority → deadline; flag transitions.
+- [x] Integration: mock clock để test checker & auto-close.
 
 ---
 
