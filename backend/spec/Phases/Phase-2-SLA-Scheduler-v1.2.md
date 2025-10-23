@@ -89,8 +89,8 @@ app.sla.autoclose.days=7
 - [x] `application.properties` thêm `app.sla.autoclose.days=7`.
 
 ### 🧠 Utility
-- [ ] Enum `SlaFlag { OK, NEAR, BREACHED }`.
-- [ ] Helper tính phần trăm thời gian đã dùng.
+- [x] Enum `SlaFlag { OK, NEAR, BREACHED }`.
+- [x] Helper tính phần trăm thời gian đã dùng.
 
 ### 🔒 Guard (không bắt buộc)
 - [ ] Bỏ qua ticket của `reporter` **inactive** (nếu chính sách yêu cầu).

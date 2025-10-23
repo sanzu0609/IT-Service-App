@@ -1,4 +1,3 @@
-
 package org.example.backend.domain.ticket.service;
 
 import java.time.Duration;
@@ -50,41 +49,24 @@ public class SlaService {
     public TicketSlaFlag evaluateFlag(Ticket ticket, LocalDateTime referenceTime) {
         TicketSlaFlag flag = TicketSlaFlag.OK;
 
-        TicketSlaFlag responseFlag = evaluateDeadline(
+        double responseRatio = SlaTimeCalculator.elapsedRatio(
                 ticket.getSlaResponseDeadline(),
                 RESPONSE_DEADLINES.get(ticket.getPriority()),
                 referenceTime
         );
-        flag = mostCritical(flag, responseFlag);
+        flag = mostCritical(flag, toFlag(responseRatio));
 
-        TicketSlaFlag resolutionFlag = evaluateDeadline(
+        double resolutionRatio = SlaTimeCalculator.elapsedRatio(
                 ticket.getSlaResolutionDeadline(),
                 RESOLUTION_DEADLINES.get(ticket.getPriority()),
                 referenceTime
         );
-        flag = mostCritical(flag, resolutionFlag);
+        flag = mostCritical(flag, toFlag(resolutionRatio));
 
         return flag;
     }
 
-    private TicketSlaFlag evaluateDeadline(LocalDateTime deadline, Duration duration, LocalDateTime referenceTime) {
-        if (deadline == null || duration == null) {
-            return TicketSlaFlag.OK;
-        }
-
-        LocalDateTime start = deadline.minus(duration);
-        if (!referenceTime.isAfter(start)) {
-            return TicketSlaFlag.OK;
-        }
-
-        Duration total = Duration.between(start, deadline);
-        if (total.isZero() || total.isNegative()) {
-            return TicketSlaFlag.OK;
-        }
-
-        Duration elapsed = Duration.between(start, referenceTime);
-        double ratio = (double) elapsed.toSeconds() / (double) total.toSeconds();
-
+    private TicketSlaFlag toFlag(double ratio) {
         if (ratio >= 1.0) {
             return TicketSlaFlag.BREACHED;
         }

@@ -1,4 +1,4 @@
-﻿package org.example.backend.domain.ticket.repository;
+package org.example.backend.domain.ticket.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
