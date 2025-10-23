@@ -85,8 +85,8 @@ app.sla.autoclose.days=7
 - [x] Ghi `TicketHistory` khi auto-close.
 
 ### 🧩 Config & Infra
-- [ ] `@EnableScheduling` trong main app.
-- [ ] `application.properties` thêm `app.sla.autoclose.days=7`.
+- [x] `@EnableScheduling` trong main app.
+- [x] `application.properties` thêm `app.sla.autoclose.days=7`.
 
 ### 🧠 Utility
 - [ ] Enum `SlaFlag { OK, NEAR, BREACHED }`.
