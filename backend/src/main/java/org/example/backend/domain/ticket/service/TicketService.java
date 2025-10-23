@@ -3,10 +3,13 @@ package org.example.backend.domain.ticket.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
+import java.util.EnumSet;
+import java.util.List;
 import org.example.backend.domain.auth.service.AuthUserDetails;
 import org.example.backend.domain.ticket.entity.Category;
 import org.example.backend.domain.ticket.entity.Ticket;
 import org.example.backend.domain.ticket.enums.TicketPriority;
+import org.example.backend.domain.ticket.enums.TicketSlaFlag;
 import org.example.backend.domain.ticket.enums.TicketStatus;
 import org.example.backend.domain.ticket.repository.CategoryRepository;
 import org.example.backend.domain.ticket.repository.TicketRepository;
@@ -25,12 +28,21 @@ import org.springframework.util.StringUtils;
 @Transactional
 public class TicketService {
 
+    private static final EnumSet<TicketStatus> ACTIVE_STATUSES = EnumSet.of(
+            TicketStatus.NEW,
+            TicketStatus.IN_PROGRESS,
+            TicketStatus.ON_HOLD,
+            TicketStatus.REOPENED,
+            TicketStatus.RESOLVED
+    );
+
     private final TicketRepository ticketRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final TicketNumberGenerator ticketNumberGenerator;
     private final WorkflowValidator workflowValidator;
     private final TicketHistoryService ticketHistoryService;
+    private final SlaService slaService;
 
     public TicketService(
             TicketRepository ticketRepository,
@@ -38,7 +50,8 @@ public class TicketService {
             UserRepository userRepository,
             TicketNumberGenerator ticketNumberGenerator,
             WorkflowValidator workflowValidator,
-            TicketHistoryService ticketHistoryService
+            TicketHistoryService ticketHistoryService,
+            SlaService slaService
     ) {
         this.ticketRepository = ticketRepository;
         this.categoryRepository = categoryRepository;
@@ -46,6 +59,7 @@ public class TicketService {
         this.ticketNumberGenerator = ticketNumberGenerator;
         this.workflowValidator = workflowValidator;
         this.ticketHistoryService = ticketHistoryService;
+        this.slaService = slaService;
     }
 
     public Ticket createTicket(CreateTicketCommand command, AuthUserDetails reporterDetails) {
@@ -67,6 +81,7 @@ public class TicketService {
         );
         ticket.setRelatedAssetId(command.relatedAssetId());
         ticket.setTicketNumber(ticketNumberGenerator.nextTicketNumber());
+        slaService.initializeSla(ticket, LocalDateTime.now());
 
         return ticketRepository.save(ticket);
     }
@@ -95,6 +110,9 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
 
+        TicketPriority previousPriority = ticket.getPriority();
+
+        boolean priorityChanged = command.priority() != null && command.priority() != ticket.getPriority();
         if (command.priority() != null) {
             ticket.setPriority(command.priority());
         }
@@ -105,7 +123,7 @@ public class TicketService {
             ticket.setCategory(category);
         }
 
-        if (command.clearRelatedAsset()) {
+        if (Boolean.TRUE.equals(command.clearRelatedAsset())) {
             ticket.setRelatedAssetId(null);
         } else if (command.relatedAssetId() != null) {
             ticket.setRelatedAssetId(command.relatedAssetId());
@@ -118,6 +136,16 @@ public class TicketService {
                 throw new IllegalArgumentException("Assignee must be active");
             }
             ticket.setAssignee(assignee);
+        }
+
+        if (priorityChanged) {
+            slaService.applyDeadlines(ticket, LocalDateTime.now());
+        }
+
+        if (ACTIVE_STATUSES.contains(ticket.getStatus())) {
+            ticket.setSlaFlag(slaService.evaluateFlag(ticket, LocalDateTime.now()));
+        } else {
+            ticket.setSlaFlag(TicketSlaFlag.OK);
         }
 
         return ticketRepository.save(ticket);
@@ -143,19 +171,44 @@ public class TicketService {
 
         switch (command.toStatus()) {
             case RESOLVED -> ticket.setResolvedAt(LocalDateTime.now());
-            case CLOSED -> ticket.setClosedAt(LocalDateTime.now());
+            case CLOSED -> {
+                ticket.setClosedAt(LocalDateTime.now());
+                ticket.setSlaFlag(TicketSlaFlag.OK);
+            }
             case REOPENED -> {
                 ticket.setClosedAt(null);
                 ticket.setResolvedAt(null);
+                slaService.applyDeadlines(ticket, LocalDateTime.now());
             }
             default -> {
             }
+        }
+
+        if (ACTIVE_STATUSES.contains(command.toStatus())) {
+            ticket.setSlaFlag(slaService.evaluateFlag(ticket, LocalDateTime.now()));
         }
 
         User actorEntity = userRepository.findById(actor.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Actor not found"));
         ticketHistoryService.recordStatusChange(ticket, previous, command.toStatus(), actorEntity, command.note());
         return ticketRepository.save(ticket);
+    }
+
+    public int autoCloseResolvedTickets(LocalDateTime threshold, String note) {
+        List<Ticket> tickets = ticketRepository.findByStatusAndResolvedAtBefore(TicketStatus.RESOLVED, threshold);
+        int count = 0;
+        LocalDateTime now = LocalDateTime.now();
+        for (Ticket ticket : tickets) {
+            TicketStatus previous = ticket.getStatus();
+            ticket.setStatus(TicketStatus.CLOSED);
+            ticket.setClosedAt(now);
+            ticket.setSlaFlag(TicketSlaFlag.OK);
+            User actor = ticket.getAssignee() != null ? ticket.getAssignee() : ticket.getReporter();
+            ticketHistoryService.recordStatusChange(ticket, previous, TicketStatus.CLOSED, actor, note);
+            ticketRepository.save(ticket);
+            count++;
+        }
+        return count;
     }
 
     private void validateCreateCommand(CreateTicketCommand command) {

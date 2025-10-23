@@ -79,10 +79,10 @@ app.sla.autoclose.days=7
 ## 5️⃣ Tasks & Checklist
 
 ### ⚙️ Service & Scheduler
-- [ ] `SlaService` tính deadline từ priority map.
-- [ ] `SlaScheduler` gồm 2 job: checker & auto-close.
-- [ ] `TicketService` gọi `SlaService` khi create/đổi priority.
-- [ ] Ghi `TicketHistory` khi auto-close.
+- [x] `SlaService` tính deadline từ priority map.
+- [x] `SlaScheduler` gồm 2 job: checker & auto-close.
+- [x] `TicketService` gọi `SlaService` khi create/đổi priority.
+- [x] Ghi `TicketHistory` khi auto-close.
 
 ### 🧩 Config & Infra
 - [ ] `@EnableScheduling` trong main app.
