@@ -50,7 +50,7 @@ export class ChangePasswordComponent {
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: async () => {
-          this.successMessage = 'Đổi mật khẩu thành công.';
+          this.successMessage = 'Password updated successfully.';
           this.authService.clearCache();
           await this.authService.ensureMe();
         },
@@ -76,6 +76,6 @@ export class ChangePasswordComponent {
         return payload.message;
       }
     }
-    return 'Không thể đổi mật khẩu. Vui lòng thử lại.';
+    return 'Unable to change password right now. Please try again.';
   }
 }

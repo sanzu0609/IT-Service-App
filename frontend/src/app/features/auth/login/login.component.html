@@ -1,9 +1,9 @@
 <div class="flex min-h-screen items-center justify-center bg-slate-50 px-4">
   <div class="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-    <h1 class="mb-4 text-center text-xl font-semibold text-slate-900">Đăng nhập</h1>
+    <h1 class="mb-4 text-center text-xl font-semibold text-slate-900">Sign In</h1>
     <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()">
       <div class="space-y-1">
-        <label class="text-sm font-medium text-slate-700" for="username">Tên đăng nhập</label>
+        <label class="text-sm font-medium text-slate-700" for="username">Username</label>
         <input
           id="username"
           type="text"
@@ -12,12 +12,12 @@
           autocomplete="username"
         />
         <p class="text-xs text-red-600" *ngIf="form.controls.username.touched && form.controls.username.invalid">
-          Bắt buộc nhập tên đăng nhập.
+          Username is required.
         </p>
       </div>
 
       <div class="space-y-1">
-        <label class="text-sm font-medium text-slate-700" for="password">Mật khẩu</label>
+        <label class="text-sm font-medium text-slate-700" for="password">Password</label>
         <input
           id="password"
           type="password"
@@ -26,7 +26,7 @@
           autocomplete="current-password"
         />
         <p class="text-xs text-red-600" *ngIf="form.controls.password.touched && form.controls.password.invalid">
-          Bắt buộc nhập mật khẩu.
+          Password is required.
         </p>
       </div>
 
@@ -35,7 +35,7 @@
         class="mt-2 w-full rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-emerald-300"
         [disabled]="loading"
       >
-        {{ loading ? 'Đang xử lý...' : 'Đăng nhập' }}
+        {{ loading ? 'Signing in...' : 'Sign In' }}
       </button>
     </form>
 
