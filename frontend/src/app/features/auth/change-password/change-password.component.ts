@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
@@ -12,6 +12,8 @@ import { UsersService } from '../../../core/services/users.service';
   templateUrl: './change-password.component.html'
 })
 export class ChangePasswordComponent {
+  private readonly fb = inject(FormBuilder);
+
   readonly form = this.fb.nonNullable.group({
     currentPassword: ['', Validators.required],
     newPassword: ['', [Validators.required, Validators.minLength(8)]],
@@ -23,7 +25,6 @@ export class ChangePasswordComponent {
   loading = false;
 
   constructor(
-    private readonly fb: FormBuilder,
     private readonly usersService: UsersService,
     private readonly authService: AuthService
   ) {}
