@@ -318,7 +318,7 @@ export const routes: Routes = [
 - **FE-0.5** Guards: `auth.guard.ts`, (opt) `force-change-password.guard.ts`
 - **FE-0.6** Pages: `login`, `change-password`
 - **FE-0.7** Layout: `main-layout` (header + logout), wiring routes
-- **FE-0.8** Manual test checklist (Auth + CSRF + Guard)
+- **FE-0.8** Manual test checklist (Auth + CSRF + Guard) → see `FE-Phase-0-Testing.md`
 
 ---
 
