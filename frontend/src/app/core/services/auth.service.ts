@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom, map, tap } from 'rxjs';
-import { ApiResponse } from '../models/api';
 import { MeResponse } from '../models/user';
 
 export interface LoginPayload {
@@ -17,8 +16,8 @@ export class AuthService {
 
   login(payload: LoginPayload) {
     return this.http
-      .post<ApiResponse<MeResponse>>('/api/auth/login', payload, { withCredentials: true })
-      .pipe(tap(response => (this.meCache = response.data ?? null)));
+      .post<MeResponse>('/api/auth/login', payload, { withCredentials: true })
+      .pipe(tap(user => (this.meCache = user ?? null)));
   }
 
   logout() {
@@ -29,8 +28,8 @@ export class AuthService {
 
   me() {
     return this.http
-      .get<ApiResponse<MeResponse>>('/api/auth/me', { withCredentials: true })
-      .pipe(tap(response => (this.meCache = response.data ?? null)));
+      .get<MeResponse>('/api/auth/me', { withCredentials: true })
+      .pipe(tap(user => (this.meCache = user ?? null)));
   }
 
   async ensureMe(): Promise<MeResponse | null> {
@@ -40,7 +39,7 @@ export class AuthService {
 
     try {
       const result = await lastValueFrom(
-        this.me().pipe(map(response => response.data ?? null))
+        this.me().pipe(map(user => user ?? null))
       );
       this.meCache = result;
       return result;
