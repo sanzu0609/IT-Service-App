@@ -4,44 +4,64 @@ import { of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 const CSRF_COOKIE_NAME = 'XSRF-TOKEN';
+const CSRF_HEADER_NAME = 'X-XSRF-TOKEN';
 const CSRF_ENDPOINT = '/api/csrf';
-const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS', 'TRACE'];
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'TRACE']);
 
 export const csrfInterceptor: HttpInterceptorFn = (request, next) => {
-  if (!shouldEnsureCsrf(request)) {
+  if (shouldBypass(request)) {
     return next(request);
   }
 
-  if (hasCsrfCookie()) {
+  if (request.headers.has(CSRF_HEADER_NAME)) {
     return next(request);
+  }
+
+  const cookieToken = readCsrfCookie();
+  if (cookieToken) {
+    const withHeader = attachHeader(request, cookieToken);
+    return next(withHeader);
   }
 
   const httpBackend = inject(HttpBackend);
   const httpClient = new HttpClient(httpBackend);
 
-  return httpClient
-    .get(CSRF_ENDPOINT, { withCredentials: true })
-    .pipe(
-      catchError(() => of(null)),
-      switchMap(() => next(request))
-    );
+  return httpClient.get(CSRF_ENDPOINT, { withCredentials: true }).pipe(
+    catchError(() => of(null)),
+    switchMap(() => {
+      const token = readCsrfCookie();
+      const withHeader = token ? attachHeader(request, token) : request;
+      return next(withHeader);
+    })
+  );
 };
 
-function shouldEnsureCsrf(request: HttpRequest<unknown>): boolean {
+function shouldBypass(request: HttpRequest<unknown>): boolean {
   if (request.url.includes(CSRF_ENDPOINT)) {
-    return false;
-  }
-
-  return !SAFE_METHODS.includes(request.method.toUpperCase());
-}
-
-function hasCsrfCookie(): boolean {
-  if (typeof document === 'undefined') {
     return true;
   }
+  return SAFE_METHODS.has(request.method.toUpperCase());
+}
 
-  return document.cookie
+function readCsrfCookie(): string | null {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+  const prefix = `${CSRF_COOKIE_NAME}=`;
+  const cookie = document.cookie
     .split(';')
-    .map(cookie => cookie.trim())
-    .some(cookie => cookie.startsWith(`${CSRF_COOKIE_NAME}=`));
+    .map(part => part.trim())
+    .find(part => part.startsWith(prefix));
+  return cookie ? decodeURIComponent(cookie.substring(prefix.length)) : null;
+}
+
+function attachHeader(request: HttpRequest<unknown>, token: string): HttpRequest<unknown> {
+  if (!token) {
+    return request;
+  }
+  return request.clone({
+    setHeaders: {
+      [CSRF_HEADER_NAME]: token
+    }
+  });
 }
