@@ -57,3 +57,9 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Admin User Management Testing
+1. Login with `admin/Admin@123`.
+2. Navigate to `/admin/users` to verify list, filters, and pagination.
+3. Create a new user, then logout and attempt logging in with that account to confirm password-change enforcement.
+4. Return as admin to update role/active flags and trigger a password reset.
