@@ -53,6 +53,10 @@
     </div>
   </header>
 
+  <div *ngIf="resetMessage()" class="rounded border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+    {{ resetMessage() }}
+  </div>
+
   <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
     <div *ngIf="loading()" class="p-6 text-center text-sm text-slate-500">Loading users…</div>
     <div *ngIf="error()" class="p-4 text-sm text-red-600">{{ error() }}</div>
@@ -118,3 +122,36 @@
     </div>
   </footer>
 </section>
+
+<div
+  *ngIf="confirmResetFor() as target"
+  class="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/50 px-4"
+>
+  <div class="w-full max-w-sm rounded-lg border border-slate-200 bg-white shadow-xl">
+    <header class="border-b border-slate-200 px-4 py-3 text-lg font-semibold text-slate-900">
+      Reset password?
+    </header>
+    <div class="px-4 py-4 text-sm text-slate-700">
+      Reset password for <span class="font-semibold">{{ target.username }}</span>?<br />
+      They will be required to set a new password on next login.
+    </div>
+    <footer class="flex items-center justify-end gap-2 px-4 py-3">
+      <button
+        class="rounded border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
+        type="button"
+        (click)="closeReset()"
+        [disabled]="resetProcessing()"
+      >
+        Cancel
+      </button>
+      <button
+        class="rounded bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-50"
+        type="button"
+        (click)="confirmReset()"
+        [disabled]="resetProcessing()"
+      >
+        {{ resetProcessing() ? 'Resetting…' : 'Confirm reset' }}
+      </button>
+    </footer>
+  </div>
+</div>

@@ -20,6 +20,8 @@ export class UsersListComponent implements OnInit, OnDestroy {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly page = signal<Page<User> | null>(null);
+  readonly resetProcessing = signal(false);
+  readonly resetMessage = signal<string | null>(null);
 
   filters: UsersListParams = {
     page: 0,
@@ -29,6 +31,8 @@ export class UsersListComponent implements OnInit, OnDestroy {
     q: undefined,
     sort: undefined
   };
+
+  confirmResetFor = signal<User | null>(null);
 
   private subscription: Subscription | null = null;
 
@@ -81,8 +85,40 @@ export class UsersListComponent implements OnInit, OnDestroy {
     this.load(next);
   }
 
-  openReset(_: User): void {
-    // placeholder for FE-0B.5
+  openReset(user: User): void {
+    this.resetMessage.set(null);
+    this.confirmResetFor.set(user);
+  }
+
+  closeReset(): void {
+    if (this.resetProcessing()) {
+      return;
+    }
+    this.confirmResetFor.set(null);
+  }
+
+  confirmReset(): void {
+    const user = this.confirmResetFor();
+    if (!user) {
+      return;
+    }
+
+    this.resetProcessing.set(true);
+    this.usersService
+      .resetPassword(user.id)
+      .subscribe({
+        next: () => {
+          this.resetProcessing.set(false);
+          this.resetMessage.set(`Temporary password issued. ${user.username} must change password on next login.`);
+          this.confirmResetFor.set(null);
+          this.load(this.filters.page ?? 0);
+        },
+        error: err => {
+          this.resetProcessing.set(false);
+          this.resetMessage.set(parseError(err));
+          this.confirmResetFor.set(null);
+        }
+      });
   }
 }
 
@@ -93,5 +129,5 @@ function parseError(err: unknown): string {
       return payload.message;
     }
   }
-  return 'Unable to load users. Please try again.';
+  return 'Unable to process request. Please try again.';
 }
