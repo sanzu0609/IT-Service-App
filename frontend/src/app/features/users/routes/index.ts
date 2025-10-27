@@ -4,6 +4,6 @@ export const USERS_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('../users-placeholder.component').then(m => m.UsersPlaceholderComponent)
+      import('../list/users-list.component').then(m => m.UsersListComponent)
   }
 ];
