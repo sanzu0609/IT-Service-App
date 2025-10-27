@@ -9,55 +9,51 @@
 
 ## 1. Access Control
 1. Login as `agent/Agent@123`.
-   - Attempt to navigate to `http://localhost:4200/admin/users`.
-   - Expect redirect back to `/tickets` (guard) and no Users menu entry.
+   - Attempt `http://localhost:4200/admin/users` ? redirected to `/tickets`, Users menu hidden.
 2. Logout and login as `admin/Admin@123`.
-   - Users menu should appear.
-   - Navigating to `/admin/users` loads the user list.
+   - Users menu visible and `/admin/users` loads.
 
 ---
 
 ## 2. Users List
-1. Confirm loading spinner then populated table with seeded users.
-2. Filter by role `AGENT` and Active `true` ? only agent accounts remain.
+1. Observe loading spinner then table data.
+2. Apply filters (role `AGENT`, Active `true`), verify results.
 3. Reset filters ? table returns to full list.
-4. Use pagination buttons and ensure page number updates.
+4. Exercise pagination buttons.
 
 ---
 
-## 3. Create User
-1. Click `+ Create`.
-2. Fill form (e.g. username `newuser`, email `newuser@example.com`, role `END_USER`).
-3. Submit ? expect redirect to list, success message optional, and new user visible.
-4. Logout and login as `newuser` to confirm app requests password change (backend behavior).
+## 3. Create User (Modal)
+1. Click `+ Create` ? modal opens.
+2. Fill form (username `newuser`, email `newuser@test.com`, role `END_USER`).
+3. Save ? modal closes, success banner shows, list refreshes with new user.
+4. Logout and attempt login as `newuser` to confirm password-change enforcement.
 
 ---
 
-## 4. Update User
-1. Back as admin ? open Edit for `newuser`.
-2. Change role to `AGENT`, mark inactive, save.
-3. Verify table reflects new role/active flags.
+## 4. Update User (Modal)
+1. As admin, on the list click `Edit` for `newuser`.
+2. Modal shows existing values; change role to `AGENT`, toggle Active off, save.
+3. List updates to reflect changes.
 
 ---
 
 ## 5. Reset Password
-1. From list, click `Reset password` for `newuser`.
+1. Click `Reset password` action for `newuser`.
 2. Confirm dialog appears; accept.
-3. Success banner shows and list reloads.
-4. Attempt login as `newuser` with original password ? should fail (must change password next login).
+3. Success banner appears, list reloads.
+4. Try login with previous password ? should fail (must change password).
 
 ---
 
 ## 6. Error Handling
-- Stop backend and trigger list reload ? show error banner.
-- Restart backend and retry to ensure recovery.
-- Submit form with invalid email ? inline validation error appears.
+- Stop backend and reload list ? error banner appears.
+- Restart backend; reload list recovers.
+- Open create modal, submit with invalid email ? inline validation message.
 
 ---
 
 ## 7. Regression – Self Change Password
-- Login with seeded `alice/Alice@123` and ensure mandatory change modal still works.
+- Login as `alice/Alice@123`; ensure forced change modal still works.
 
----
-
-Document any issues or unexpected responses for follow-up.
+Document any unexpected behaviour for follow-up.

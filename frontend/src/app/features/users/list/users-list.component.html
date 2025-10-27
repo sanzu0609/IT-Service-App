@@ -44,12 +44,13 @@
     </div>
 
     <div class="ml-auto">
-      <a
+      <button
         class="inline-flex items-center rounded border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-        [routerLink]="['/admin/users/form/new']"
+        type="button"
+        (click)="openCreate()"
       >
         + Create
-      </a>
+      </button>
     </div>
   </header>
 
@@ -80,12 +81,9 @@
           <td class="px-3 py-3">{{ user.active ? 'Yes' : 'No' }}</td>
           <td class="px-3 py-3">{{ user.departmentId ?? '-' }}</td>
           <td class="px-3 py-3 text-right">
-            <a
-              class="mr-3 text-blue-600 hover:underline"
-              [routerLink]="['/admin/users/form', user.id]"
-            >
+            <button class="mr-3 text-blue-600 hover:underline" type="button" (click)="openEdit(user)">
               Edit
-            </a>
+            </button>
             <button class="text-rose-600 hover:underline" type="button" (click)="openReset(user)">
               Reset password
             </button>
@@ -122,6 +120,15 @@
     </div>
   </footer>
 </section>
+
+<app-user-form-modal
+  [open]="formOpen()"
+  [mode]="formMode()"
+  [user]="editingUser()"
+  [loading]="formLoading()"
+  (saved)="handleFormSaved()"
+  (closed)="handleFormClosed()"
+></app-user-form-modal>
 
 <div
   *ngIf="confirmResetFor() as target"

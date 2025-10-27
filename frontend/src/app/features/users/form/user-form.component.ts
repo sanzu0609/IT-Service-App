@@ -1,156 +1,169 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription, finalize } from 'rxjs';
-import { Role, User } from '../../../core/models/user';
-import {
-  CreateUserPayload,
-  UpdateUserPayload,
-  UsersService
-} from '../../../core/services/users.service';
+import { finalize } from 'rxjs/operators';
+import { UsersService, CreateUserPayload, UpdateUserPayload } from '../../../core/services/users.service';
+import { User } from '../../../core/models/user';
 
 @Component({
-  selector: 'app-user-form',
+  selector: 'app-user-form-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './user-form.component.html'
 })
-export class UserFormComponent implements OnInit, OnDestroy {
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
+export class UserFormComponent implements OnChanges {
+  @Input() open = false;
+  @Input() mode: 'create' | 'edit' = 'create';
+  @Input() user: User | null = null;
+  @Input() loading = false;
+  @Output() closed = new EventEmitter<void>();
+  @Output() saved = new EventEmitter<void>();
+
   private readonly fb = inject(FormBuilder);
   private readonly usersService = inject(UsersService);
 
-  readonly roles: Role[] = ['ADMIN', 'AGENT', 'END_USER'];
-  readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly saving = signal(false);
-  readonly saved = signal(false);
+  readonly roles = ['ADMIN', 'AGENT', 'END_USER'] as const;
 
   readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
     email: ['', [Validators.required, Validators.email]],
     fullName: ['', [Validators.maxLength(100)]],
-    role: this.fb.nonNullable.control<Role>('AGENT', Validators.required),
+    role: this.fb.nonNullable.control<'ADMIN' | 'AGENT' | 'END_USER'>('AGENT', Validators.required),
     departmentId: this.fb.control<number | null | undefined>(undefined),
     active: this.fb.nonNullable.control<boolean>(true)
   });
 
-  userId: number | null = null;
-  private subscription: Subscription | null = null;
+  saving = false;
+  errorMessage = '';
 
   get title(): string {
-    return this.userId ? 'Edit user' : 'Create user';
+    return this.mode === 'edit' ? 'Edit user' : 'Create user';
   }
 
-  get isEdit(): boolean {
-    return this.userId !== null;
+  get formDisabled(): boolean {
+    return this.loading || this.saving;
   }
 
-  ngOnInit(): void {
-    this.subscription = this.route.paramMap.subscribe(params => {
-      const idParam = params.get('id');
-      if (idParam && idParam !== 'new') {
-        this.userId = Number(idParam);
-        this.loadUser(this.userId);
-      } else {
-        this.userId = null;
-        this.form.reset({
-          username: '',
-          email: '',
-          fullName: '',
-          role: 'AGENT',
-          departmentId: undefined,
-          active: true
-        });
-      }
-    });
-  }
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['user'] || changes['mode'] || changes['open']) {
+      this.applyState();
+    }
 
-  ngOnDestroy(): void {
-    this.subscription?.unsubscribe();
+    if (changes['open'] && !this.open) {
+      this.resetForm();
+    }
   }
 
   submit(): void {
-    if (this.form.invalid) {
+    if (this.form.invalid || this.saving || this.loading) {
       this.form.markAllAsTouched();
       return;
     }
 
-    this.saving.set(true);
-    this.error.set(null);
+    this.saving = true;
+    this.errorMessage = '';
 
-    const payload = this.buildPayload();
-
-    const request$ = this.userId
-      ? this.usersService.update(this.userId, payload as UpdateUserPayload)
-      : this.usersService.create(payload as CreateUserPayload);
+    const payloads = this.buildPayloads();
+    const request$ = this.mode === 'edit' && this.user
+      ? this.usersService.update(this.user.id, payloads.updatePayload)
+      : this.usersService.create(payloads.createPayload!);
 
     request$
-      .pipe(finalize(() => this.saving.set(false)))
+      .pipe(finalize(() => (this.saving = false)))
       .subscribe({
         next: () => {
-          this.saved.set(true);
-          this.router.navigate(['/admin/users']);
+          this.saved.emit();
+          this.resetForm();
         },
         error: err => {
-          this.error.set(parseError(err));
+          this.errorMessage = this.resolveErrorMessage(err);
         }
       });
   }
 
-  private buildPayload(): CreateUserPayload | UpdateUserPayload {
+  close(): void {
+    if (this.saving) {
+      return;
+    }
+    this.resetForm();
+    this.closed.emit();
+  }
+
+  private buildPayloads(): { createPayload?: CreateUserPayload; updatePayload: UpdateUserPayload } {
     const raw = this.form.getRawValue();
-    const base = {
-      email: raw.email.trim(),
-      fullName: raw.fullName?.trim() || undefined,
+    const trimmedEmail = raw.email.trim();
+    const trimmedFullName = raw.fullName?.trim();
+
+    const updatePayload: UpdateUserPayload = {
+      email: trimmedEmail,
+      fullName: trimmedFullName ? trimmedFullName : undefined,
       role: raw.role,
       departmentId: raw.departmentId ?? undefined,
       active: raw.active
     };
 
-    if (this.userId) {
-      return base;
+    if (this.mode === 'edit') {
+      return { updatePayload };
     }
 
-    return {
+    const createPayload: CreateUserPayload = {
       username: raw.username.trim(),
-      ...base
-    } as CreateUserPayload;
+      email: trimmedEmail,
+      fullName: trimmedFullName ? trimmedFullName : undefined,
+      role: raw.role,
+      departmentId: raw.departmentId ?? undefined,
+      active: raw.active
+    };
+
+    return { createPayload, updatePayload };
   }
 
-  private loadUser(id: number): void {
-    this.loading.set(true);
-    this.usersService
-      .get(id)
-      .pipe(finalize(() => this.loading.set(false)))
-      .subscribe({
-        next: user => this.populateForm(user),
-        error: err => {
-          this.error.set(parseError(err));
-        }
+  private applyState(): void {
+    if (!this.open) {
+      return;
+    }
+
+    if (this.mode === 'edit' && this.user) {
+      this.form.patchValue({
+        username: this.user.username,
+        email: this.user.email,
+        fullName: this.user.fullName || '',
+        role: this.user.role,
+        departmentId: this.user.departmentId ?? undefined,
+        active: this.user.active
       });
-  }
-
-  private populateForm(user: User): void {
-    this.form.patchValue({
-      username: user.username,
-      email: user.email,
-      fullName: user.fullName || '',
-      role: user.role,
-      departmentId: user.departmentId ?? undefined,
-      active: user.active
-    });
-  }
-}
-
-function parseError(err: unknown): string {
-  if (typeof err === 'object' && err !== null && 'error' in err) {
-    const payload = (err as { error: { message?: string; code?: string } }).error;
-    if (typeof payload?.message === 'string') {
-      return payload.message;
+      this.form.controls.username.disable();
+    } else if (this.mode === 'create') {
+      this.resetForm();
+      this.form.controls.username.enable();
     }
   }
-  return 'Something went wrong. Please try again.';
+
+  private resetForm(): void {
+    this.form.reset({
+      username: '',
+      email: '',
+      fullName: '',
+      role: 'AGENT',
+      departmentId: undefined,
+      active: true
+    });
+    this.form.controls.username.enable();
+    this.errorMessage = '';
+  }
+
+  private resolveErrorMessage(error: unknown): string {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'error' in error &&
+      typeof (error as { error: unknown }).error === 'object'
+    ) {
+      const payload = (error as { error: { message?: string } }).error;
+      if (payload?.message) {
+        return payload.message;
+      }
+    }
+    return 'Unable to save user. Please try again.';
+  }
 }

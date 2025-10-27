@@ -49,7 +49,7 @@ export class ChangePasswordModalComponent {
     this.successMessage = '';
 
     this.usersService
-      .changePassword({ currentPassword, newPassword })
+      .changePasswordSelf({ currentPassword, newPassword })
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: async () => {

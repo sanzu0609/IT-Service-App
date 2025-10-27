@@ -1,16 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Page } from '../../../core/models/api';
 import { Role, User } from '../../../core/models/user';
 import { UsersService, UsersListParams } from '../../../core/services/users.service';
+import { UserFormComponent } from '../form/user-form.component';
 
 @Component({
   selector: 'app-users-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, UserFormComponent],
   templateUrl: './users-list.component.html'
 })
 export class UsersListComponent implements OnInit, OnDestroy {
@@ -22,6 +22,10 @@ export class UsersListComponent implements OnInit, OnDestroy {
   readonly page = signal<Page<User> | null>(null);
   readonly resetProcessing = signal(false);
   readonly resetMessage = signal<string | null>(null);
+  readonly formOpen = signal(false);
+  readonly formMode = signal<'create' | 'edit'>('create');
+  readonly formLoading = signal(false);
+  readonly editingUser = signal<User | null>(null);
 
   filters: UsersListParams = {
     page: 0,
@@ -35,6 +39,7 @@ export class UsersListComponent implements OnInit, OnDestroy {
   confirmResetFor = signal<User | null>(null);
 
   private subscription: Subscription | null = null;
+  private formSubscription: Subscription | null = null;
 
   ngOnInit(): void {
     this.load();
@@ -42,6 +47,7 @@ export class UsersListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscription?.unsubscribe();
+    this.formSubscription?.unsubscribe();
   }
 
   trackById(_: number, user: User): number {
@@ -83,6 +89,43 @@ export class UsersListComponent implements OnInit, OnDestroy {
       return;
     }
     this.load(next);
+  }
+
+  openCreate(): void {
+    this.formMode.set('create');
+    this.editingUser.set(null);
+    this.formLoading.set(false);
+    this.formOpen.set(true);
+  }
+
+  openEdit(user: User): void {
+    this.formMode.set('edit');
+    this.formLoading.set(true);
+    this.formOpen.set(true);
+    this.formSubscription?.unsubscribe();
+    this.formSubscription = this.usersService.get(user.id).subscribe({
+      next: detail => {
+        this.editingUser.set(detail);
+        this.formLoading.set(false);
+      },
+      error: err => {
+        this.error.set(parseError(err));
+        this.formLoading.set(false);
+        this.formOpen.set(false);
+      }
+    });
+  }
+
+  handleFormSaved(): void {
+    this.formOpen.set(false);
+    this.resetMessage.set('User saved successfully.');
+    this.load(this.filters.page ?? 0);
+  }
+
+  handleFormClosed(): void {
+    this.formOpen.set(false);
+    this.editingUser.set(null);
+    this.formLoading.set(false);
   }
 
   openReset(user: User): void {

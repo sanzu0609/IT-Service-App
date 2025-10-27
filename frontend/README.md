@@ -60,6 +60,6 @@ For more information on using the Angular CLI, including detailed command refere
 
 ## Admin User Management Testing
 1. Login with `admin/Admin@123`.
-2. Navigate to `/admin/users` to verify list, filters, and pagination.
-3. Create a new user, then logout and attempt logging in with that account to confirm password-change enforcement.
-4. Return as admin to update role/active flags and trigger a password reset.
+2. Visit `/admin/users` to verify list, filters, pagination, and role-based guard.
+3. Use the `+ Create` modal to add a user, then log in as that user to confirm password-change enforcement.
+4. Reopen the modal via `Edit` to update role/active flags, and use the reset-password dialog to issue a temporary password.
