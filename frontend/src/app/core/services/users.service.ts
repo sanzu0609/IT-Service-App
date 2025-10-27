@@ -69,8 +69,12 @@ export class UsersService {
     });
   }
 
-  resetPassword(id: number): Observable<ResetPasswordResponse> {
-    return this.http.post<ResetPasswordResponse>(`/api/users/${id}/reset-password`, {}, {
+  resetPassword(id: number, tempPassword?: string): Observable<ResetPasswordResponse> {
+    const body = tempPassword && tempPassword.trim().length > 0
+      ? { tempPassword: tempPassword.trim() }
+      : {};
+
+    return this.http.post<ResetPasswordResponse>(`/api/users/${id}/reset-password`, body, {
       withCredentials: true
     });
   }

@@ -59,7 +59,7 @@
   </div>
 
   <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-    <div *ngIf="loading()" class="p-6 text-center text-sm text-slate-500">Loading users…</div>
+    <div *ngIf="loading()" class="p-6 text-center text-sm text-slate-500">Loading usersï¿½</div>
     <div *ngIf="error()" class="p-4 text-sm text-red-600">{{ error() }}</div>
 
     <table *ngIf="page() as current" class="w-full table-fixed border-collapse text-sm">
@@ -130,10 +130,7 @@
   (closed)="handleFormClosed()"
 ></app-user-form-modal>
 
-<div
-  *ngIf="confirmResetFor() as target"
-  class="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/50 px-4"
->
+<div *ngIf="confirmResetFor() as target" class="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/50 px-4">
   <div class="w-full max-w-sm rounded-lg border border-slate-200 bg-white shadow-xl">
     <header class="border-b border-slate-200 px-4 py-3 text-lg font-semibold text-slate-900">
       Reset password?
@@ -142,23 +139,37 @@
       Reset password for <span class="font-semibold">{{ target.username }}</span>?<br />
       They will be required to set a new password on next login.
     </div>
-    <footer class="flex items-center justify-end gap-2 px-4 py-3">
-      <button
-        class="rounded border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
-        type="button"
-        (click)="closeReset()"
+    <form (ngSubmit)="confirmReset()" class="px-4">
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+        Temporary password
+      </label>
+      <input
+        type="text"
+        class="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+        placeholder="Enter temporary password"
+        [(ngModel)]="resetTempPasswordValue"
+        name="tempPassword"
         [disabled]="resetProcessing()"
-      >
-        Cancel
-      </button>
-      <button
-        class="rounded bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-50"
-        type="button"
-        (click)="confirmReset()"
-        [disabled]="resetProcessing()"
-      >
-        {{ resetProcessing() ? 'Resetting…' : 'Confirm reset' }}
-      </button>
-    </footer>
+      />
+      <p *ngIf="resetError()" class="mt-1 text-xs text-red-600">{{ resetError() }}</p>
+      <footer class="flex items-center justify-end gap-2 py-3">
+        <button
+          class="rounded border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
+          type="button"
+          (click)="closeReset()"
+          [disabled]="resetProcessing()"
+        >
+          Cancel
+        </button>
+        <button
+          class="rounded bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-50"
+          type="submit"
+          [disabled]="resetProcessing()"
+        >
+          {{ resetProcessing() ? 'Resettingï¿½' : 'Confirm reset' }}
+        </button>
+      </footer>
+    </form>
   </div>
 </div>
+

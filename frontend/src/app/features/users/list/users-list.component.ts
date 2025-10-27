@@ -22,6 +22,8 @@ export class UsersListComponent implements OnInit, OnDestroy {
   readonly page = signal<Page<User> | null>(null);
   readonly resetProcessing = signal(false);
   readonly resetMessage = signal<string | null>(null);
+  readonly resetError = signal<string | null>(null);
+  resetTempPasswordValue = '';
   readonly formOpen = signal(false);
   readonly formMode = signal<'create' | 'edit'>('create');
   readonly formLoading = signal(false);
@@ -130,6 +132,8 @@ export class UsersListComponent implements OnInit, OnDestroy {
 
   openReset(user: User): void {
     this.resetMessage.set(null);
+    this.resetError.set(null);
+    this.resetTempPasswordValue = '';
     this.confirmResetFor.set(user);
   }
 
@@ -138,6 +142,8 @@ export class UsersListComponent implements OnInit, OnDestroy {
       return;
     }
     this.confirmResetFor.set(null);
+    this.resetTempPasswordValue = '';
+    this.resetError.set(null);
   }
 
   confirmReset(): void {
@@ -146,20 +152,29 @@ export class UsersListComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const tempPassword = this.resetTempPasswordValue.trim();
+    if (!tempPassword) {
+      this.resetError.set('Please enter a temporary password.');
+      return;
+    }
+    this.resetError.set(null);
+
     this.resetProcessing.set(true);
     this.usersService
-      .resetPassword(user.id)
+      .resetPassword(user.id, tempPassword)
       .subscribe({
         next: () => {
           this.resetProcessing.set(false);
-          this.resetMessage.set(`Temporary password issued. ${user.username} must change password on next login.`);
+          this.resetMessage.set(`Temporary password set. Communicate "${tempPassword}" to ${user.username}; they must change it on next login.`);
           this.confirmResetFor.set(null);
+          this.resetTempPasswordValue = '';
           this.load(this.filters.page ?? 0);
         },
         error: err => {
           this.resetProcessing.set(false);
           this.resetMessage.set(parseError(err));
           this.confirmResetFor.set(null);
+          this.resetTempPasswordValue = '';
         }
       });
   }
