@@ -19,6 +19,7 @@ export class MainLayoutComponent implements OnInit {
   readonly showChangePasswordModal = signal(false);
   readonly forceChangePassword = signal(false);
   readonly isModalOpen = computed(() => this.showChangePasswordModal());
+  readonly showUserMenu = signal(false);
 
   constructor(
     private readonly authService: AuthService,
@@ -73,5 +74,13 @@ export class MainLayoutComponent implements OnInit {
       this.user.set({ ...current, mustChangePassword: false });
     }
     this.showChangePasswordModal.set(false);
+  }
+
+  toggleUserMenu(): void {
+    this.showUserMenu.set(!this.showUserMenu());
+  }
+
+  closeUserMenu(): void {
+    this.showUserMenu.set(false);
   }
 }
