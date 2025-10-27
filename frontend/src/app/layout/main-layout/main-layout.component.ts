@@ -20,6 +20,7 @@ export class MainLayoutComponent implements OnInit {
   readonly forceChangePassword = signal(false);
   readonly isModalOpen = computed(() => this.showChangePasswordModal());
   readonly showUserMenu = signal(false);
+  readonly isAdmin = computed(() => this.user()?.role === 'ADMIN');
 
   constructor(
     private readonly authService: AuthService,
