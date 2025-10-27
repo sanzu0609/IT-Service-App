@@ -9,22 +9,33 @@
         <a routerLink="/admin/users" routerLinkActive="text-emerald-600" class="hover:text-emerald-500">
           Users
         </a>
-        <a routerLink="/change-password" class="hover:text-emerald-500">
-          Đổi mật khẩu
-        </a>
+        <button
+          type="button"
+          class="rounded border border-transparent px-3 py-1 text-slate-600 transition hover:bg-slate-100"
+          (click)="openChangePassword()"
+        >
+          Change password
+        </button>
         <button
           class="rounded border border-transparent px-3 py-1 text-red-600 transition hover:bg-red-50 disabled:opacity-50"
           type="button"
           (click)="logout()"
-          [disabled]="loggingOut"
+          [disabled]="loggingOut()"
         >
-          {{ loggingOut ? 'Đang đăng xuất...' : 'Đăng xuất' }}
+          {{ loggingOut() ? 'Signing out…' : 'Sign out' }}
         </button>
       </nav>
     </div>
   </header>
 
-  <main class="mx-auto flex w-full max-w-6xl flex-1 px-4 py-6">
+  <main class="relative mx-auto flex w-full max-w-6xl flex-1 px-4 py-6">
     <router-outlet />
   </main>
+
+  <app-change-password-modal
+    [open]="isModalOpen()"
+    [forced]="forceChangePassword()"
+    (closed)="handleModalClosed()"
+    (passwordChanged)="handlePasswordChanged()"
+  ></app-change-password-modal>
 </div>

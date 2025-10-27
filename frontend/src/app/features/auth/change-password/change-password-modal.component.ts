@@ -1,18 +1,25 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 import { UsersService } from '../../../core/services/users.service';
 
 @Component({
-  selector: 'app-change-password',
+  selector: 'app-change-password-modal',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './change-password.component.html'
+  templateUrl: './change-password-modal.component.html'
 })
-export class ChangePasswordComponent {
+export class ChangePasswordModalComponent {
+  @Input() open = false;
+  @Input() forced = false;
+  @Output() closed = new EventEmitter<void>();
+  @Output() passwordChanged = new EventEmitter<void>();
+
   private readonly fb = inject(FormBuilder);
+  private readonly usersService = inject(UsersService);
+  private readonly authService = inject(AuthService);
 
   readonly form = this.fb.nonNullable.group({
     currentPassword: ['', Validators.required],
@@ -23,11 +30,6 @@ export class ChangePasswordComponent {
   errorMessage = '';
   successMessage = '';
   loading = false;
-
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly authService: AuthService
-  ) {}
 
   submit(): void {
     if (this.form.invalid) {
@@ -54,11 +56,24 @@ export class ChangePasswordComponent {
           this.successMessage = 'Password updated successfully.';
           this.authService.clearCache();
           await this.authService.ensureMe();
+          this.passwordChanged.emit();
+          if (!this.forced) {
+            this.closed.emit();
+          }
+          this.resetForm();
         },
         error: error => {
           this.errorMessage = this.resolveErrorMessage(error);
         }
       });
+  }
+
+  close(): void {
+    if (this.forced || this.loading) {
+      return;
+    }
+    this.resetForm();
+    this.closed.emit();
   }
 
   get passwordMismatch(): boolean {
@@ -78,5 +93,15 @@ export class ChangePasswordComponent {
       }
     }
     return 'Unable to change password right now. Please try again.';
+  }
+
+  private resetForm(): void {
+    this.form.reset({
+      currentPassword: '',
+      newPassword: '',
+      confirm: ''
+    });
+    this.errorMessage = '';
+    this.successMessage = '';
   }
 }

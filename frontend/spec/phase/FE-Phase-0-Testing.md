@@ -25,31 +25,30 @@
 
 ---
 
-## 2. Change Password
-1. While logged in as `admin`, navigate to `/change-password`.
-2. Submit empty form → expect validation messages.
-3. Submit mismatched confirmation.
+## 2. Change Password (Modal)
+1. While logged in as `admin`, click **Change password** in the header.
+2. Submit empty form – expect validation messages on all fields.
+3. Enter mismatched confirmation.
    - `confirm` field should show “Password confirmation does not match.”
-4. Submit correct current password with new strong password (e.g. `Admin@456!`).
-   - Expect success toast/message and redirect back to `/tickets`.
-   - Verify `AuthService` cache refreshed (calls `/api/auth/me`).
-5. Logout and re-login using new password – old password should fail.
+4. Submit correct current password with a new strong password (e.g. `Admin@456!`).
+   - Expect success state, modal closes, and user stays on `/tickets`.
+   - Verify `AuthService` cache refreshed (check `/api/auth/me` call).
+5. Logout and re-login using the new password – old password should fail.
 
 ---
 
-## 3. Force Change Password Guard
-1. Reset a user via backend to require password change (`alice` is seeded with `mustChangePassword=true`).
+## 3. Forced Password Change
+1. Reset a user via backend to require password change (`alice` seeded with `mustChangePassword=true`).
 2. Login with `alice` / `Alice@123`.
-   - Expect redirect to `/change-password` immediately.
-   - Navigating to `/tickets` manually should bounce back to `/change-password`.
-3. Change password successfully and ensure guard allows access afterwards.
+   - Change-password modal should open immediately and cannot be closed until success.
+3. Submit a valid change; modal closes and navigation inside the app becomes available.
 
 ---
 
 ## 4. Auth Guard / Logout
-1. On `/tickets`, click “Logout”.
+1. On `/tickets`, click **Sign out**.
    - Expect redirect to `/login`.
-2. Attempt to hit `/tickets` or `/change-password` directly.
+2. Attempt to hit `/tickets` directly while logged out.
    - Expect redirect back to `/login`.
 
 ---
