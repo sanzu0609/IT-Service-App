@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpSession;
 import java.util.Optional;
 import org.example.backend.domain.auth.dto.request.LoginRequest;
 import org.example.backend.domain.auth.dto.response.AuthUserResponse;
+import org.example.backend.domain.department.dto.DepartmentLiteDto;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -65,11 +66,22 @@ public class AuthService {
     }
 
     private AuthUserResponse toResponse(AuthUserDetails userDetails) {
+        DepartmentLiteDto department = null;
+        if (userDetails.getDepartmentId() != null) {
+            department = new DepartmentLiteDto(
+                    userDetails.getDepartmentId(),
+                    userDetails.getDepartmentCode(),
+                    userDetails.getDepartmentName()
+            );
+        }
+
         return new AuthUserResponse(
                 userDetails.getId(),
                 userDetails.getUsername(),
                 userDetails.getRole().name(),
-                userDetails.isMustChangePassword()
+                userDetails.isMustChangePassword(),
+                department,
+                userDetails.getDepartmentId()
         );
     }
 }

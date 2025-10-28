@@ -37,7 +37,7 @@ class UserSelfServiceTest {
 
     @BeforeEach
     void setUp() {
-        existing = new User("alice", "alice@example.com", "hash", "Alice", UserRole.END_USER, 1L);
+        existing = new User("alice", "alice@example.com", "hash", "Alice", UserRole.END_USER, null);
         ReflectionTestUtils.setField(existing, "id", 3L);
     }
 

@@ -71,7 +71,7 @@ class UserControllerIntegrationTest {
                 "Temp@2025"
         );
 
-        mockMvc.perform(post("/users")
+        mockMvc.perform(post("/api/users")
                         .with(SecurityMockMvcRequestPostProcessors.user(authUser("admin")))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -85,7 +85,7 @@ class UserControllerIntegrationTest {
 
     @Test
     void listUsers_forbiddenForNonAdmin() throws Exception {
-        mockMvc.perform(get("/users")
+        mockMvc.perform(get("/api/users")
                         .with(SecurityMockMvcRequestPostProcessors.user(authUser("agent"))))
                 .andExpect(status().isForbidden());
     }
@@ -96,7 +96,7 @@ class UserControllerIntegrationTest {
 
         ChangePasswordRequest request = new ChangePasswordRequest("Self@123", "Self@456");
 
-        mockMvc.perform(post("/users/change-password")
+        mockMvc.perform(post("/api/users/change-password")
                         .with(SecurityMockMvcRequestPostProcessors.user(authUser("selfuser")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -109,7 +109,7 @@ class UserControllerIntegrationTest {
 
         ChangePasswordRequest request = new ChangePasswordRequest("Self@123", "Self@456");
 
-        mockMvc.perform(post("/users/change-password")
+        mockMvc.perform(post("/api/users/change-password")
                         .with(SecurityMockMvcRequestPostProcessors.user(authUser("selfchange")))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -127,7 +127,7 @@ class UserControllerIntegrationTest {
 
         ResetPasswordRequest request = new ResetPasswordRequest("Target@456");
 
-        mockMvc.perform(post("/users/" + target.getId() + "/reset-password")
+        mockMvc.perform(post("/api/users/" + target.getId() + "/reset-password")
                         .with(SecurityMockMvcRequestPostProcessors.user(authUser("admin")))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -142,7 +142,7 @@ class UserControllerIntegrationTest {
 
         String payload = objectMapper.writeValueAsString(new UpdateUserPayload(null, null, null, null, false));
 
-        mockMvc.perform(patch("/users/" + admin.getId())
+        mockMvc.perform(patch("/api/users/" + admin.getId())
                         .with(SecurityMockMvcRequestPostProcessors.user(AuthUserDetails.from(admin)))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -159,13 +159,14 @@ class UserControllerIntegrationTest {
     private User ensureUserExists(String username, String rawPassword) {
         return userRepository.findByUsername(username)
                 .orElseGet(() -> {
+                    var department = departmentRepository.findById(itDepartmentId).orElseThrow();
                     User user = new User(
                             username,
                             username + "@example.com",
                             passwordEncoder.encode(rawPassword),
                             username,
                             UserRole.END_USER,
-                            itDepartmentId
+                            department
                     );
                     user.setMustChangePassword(true);
                     return userRepository.save(user);

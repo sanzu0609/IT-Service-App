@@ -2,15 +2,19 @@ package org.example.backend.domain.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import java.time.LocalDateTime;
+import org.example.backend.domain.department.entity.Department;
 import org.example.backend.domain.user.enums.UserRole;
 
 @Entity
@@ -37,8 +41,9 @@ public class User {
     @Column(nullable = false, length = 20)
     private UserRole role;
 
-    @Column(name = "department_id")
-    private Long departmentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
 
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
@@ -62,14 +67,14 @@ public class User {
             String passwordHash,
             String fullName,
             UserRole role,
-            Long departmentId
+            Department department
     ) {
         this.username = username;
         this.email = email;
         this.passwordHash = passwordHash;
         this.fullName = fullName;
         this.role = role;
-        this.departmentId = departmentId;
+        this.department = department;
     }
 
     @PrePersist
@@ -128,12 +133,12 @@ public class User {
         this.role = role;
     }
 
-    public Long getDepartmentId() {
-        return departmentId;
+    public Department getDepartment() {
+        return department;
     }
 
-    public void setDepartmentId(Long departmentId) {
-        this.departmentId = departmentId;
+    public void setDepartment(Department department) {
+        this.department = department;
     }
 
     public boolean isActive() {

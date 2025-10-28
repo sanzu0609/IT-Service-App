@@ -3,7 +3,6 @@ package org.example.backend.config;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.example.backend.domain.department.entity.Department;
 import org.example.backend.domain.ticket.entity.Category;
 import org.example.backend.domain.ticket.repository.CategoryRepository;
@@ -37,13 +36,13 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        Map<String, Long> departmentIds = seedDepartments();
+        Map<String, Department> departments = seedDepartments();
         seedCategories();
-        seedUsers(departmentIds);
+        seedUsers(departments);
     }
 
-    private Map<String, Long> seedDepartments() {
-        Map<String, Long> departmentIds = new LinkedHashMap<>();
+    private Map<String, Department> seedDepartments() {
+        Map<String, Department> results = new LinkedHashMap<>();
         Map<String, String> departments = Map.of(
                 "IT", "Information Technology",
                 "HR", "Human Resources"
@@ -54,14 +53,10 @@ public class DataSeeder implements CommandLineRunner {
                     .orElseGet(() -> departmentRepository.save(
                             new Department(code, name, name + " team")
                     ));
-            departmentIds.put(code, department.getId());
+            results.put(code, department);
         });
 
-        if (departmentIds.isEmpty()) {
-            return departmentIds;
-        }
-
-        return departmentIds;
+        return results;
     }
 
     private void seedCategories() {
@@ -73,14 +68,14 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    private void seedUsers(Map<String, Long> departmentIds) {
+    private void seedUsers(Map<String, Department> departments) {
         createUserIfAbsent(
                 "admin",
                 "admin@example.com",
                 "Admin User",
                 "Admin@123",
                 UserRole.ADMIN,
-                departmentIds.get("IT")
+                departments.get("IT")
         );
 
         createUserIfAbsent(
@@ -89,7 +84,7 @@ public class DataSeeder implements CommandLineRunner {
                 "Agent Smith",
                 "Agent@123",
                 UserRole.AGENT,
-                departmentIds.get("IT")
+                departments.get("IT")
         );
 
         createUserIfAbsent(
@@ -98,7 +93,7 @@ public class DataSeeder implements CommandLineRunner {
                 "Alice Johnson",
                 "Alice@123",
                 UserRole.END_USER,
-                departmentIds.get("HR")
+                departments.get("HR")
         );
     }
 
@@ -108,16 +103,16 @@ public class DataSeeder implements CommandLineRunner {
             String fullName,
             String rawPassword,
             UserRole role,
-            Long departmentId
+            Department department
     ) {
-        if (departmentId == null
+        if (department == null
                 || userRepository.existsByUsername(username)
                 || userRepository.existsByEmail(email)) {
             return;
         }
 
         String encodedPassword = passwordEncoder.encode(rawPassword);
-        User user = new User(username, email, encodedPassword, fullName, role, departmentId);
+        User user = new User(username, email, encodedPassword, fullName, role, department);
         user.setMustChangePassword(false);
         user.setActive(true);
         userRepository.save(user);
