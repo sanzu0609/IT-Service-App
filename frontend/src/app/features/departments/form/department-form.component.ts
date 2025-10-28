@@ -14,6 +14,7 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { DepartmentResponse } from '../../../core/models/department';
 import { DepartmentsService } from '../../../core/services/departments.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-department-form',
@@ -27,6 +28,7 @@ export class DepartmentFormComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly departmentsService = inject(DepartmentsService);
+  private readonly toast = inject(ToastService);
 
   private readonly subscriptions = new Subscription();
 
@@ -104,7 +106,9 @@ export class DepartmentFormComponent implements OnInit, OnDestroy {
           this.patchForm(department);
         },
         error: err => {
-          this.error.set(this.resolveErrorMessage(err));
+          const message = this.resolveErrorMessage(err);
+          this.error.set(message);
+          this.toast.error(message);
         }
       });
 
@@ -136,7 +140,10 @@ export class DepartmentFormComponent implements OnInit, OnDestroy {
       .create(payload)
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
-        next: () => this.navigateBack(),
+        next: () => {
+          this.toast.success('Tạo phòng ban thành công.');
+          this.navigateBack();
+        },
         error: err => this.handleSubmitError(err)
       });
 
@@ -164,6 +171,7 @@ export class DepartmentFormComponent implements OnInit, OnDestroy {
       .subscribe({
         next: department => {
           this.department.set(department);
+          this.toast.success('Cập nhật phòng ban thành công.');
           this.navigateBack();
         },
         error: err => this.handleSubmitError(err)
@@ -175,12 +183,15 @@ export class DepartmentFormComponent implements OnInit, OnDestroy {
   private handleSubmitError(error: unknown): void {
     if (this.isConflictError(error)) {
       this.conflictError.set(true);
-      this.error.set(
-        'Mã hoặc tên phòng ban đã tồn tại. Vui lòng kiểm tra lại.'
-      );
+      const message =
+        'Mã hoặc tên phòng ban đã tồn tại. Vui lòng kiểm tra lại.';
+      this.error.set(message);
+      this.toast.error(message);
       return;
     }
-    this.error.set(this.resolveErrorMessage(error));
+    const message = this.resolveErrorMessage(error);
+    this.error.set(message);
+    this.toast.error(message);
   }
 
   private resolveErrorMessage(error: unknown): string {

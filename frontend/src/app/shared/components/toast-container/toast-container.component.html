@@ -1,0 +1,41 @@
+<div class="pointer-events-none fixed top-4 right-4 z-50 flex w-full max-w-sm flex-col gap-3">
+  <div
+    *ngFor="let toast of toasts(); trackBy: trackById"
+    class="pointer-events-auto overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-200/50"
+  >
+    <div
+      class="flex items-start gap-3 px-4 py-3"
+      [ngClass]="{
+        'border-l-4 border-emerald-500': toast.type === 'success',
+        'border-l-4 border-rose-500': toast.type === 'error',
+        'border-l-4 border-sky-500': toast.type === 'info'
+      }"
+    >
+      <div class="flex-1">
+        <p class="text-sm font-semibold text-slate-900">
+          {{ toast.message }}
+        </p>
+        <p *ngIf="toast.description" class="mt-1 text-xs text-slate-600">
+          {{ toast.description }}
+        </p>
+      </div>
+      <button
+        *ngIf="toast.closable"
+        type="button"
+        class="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+        (click)="dismiss(toast.id)"
+        aria-label="Đóng thông báo"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M6 6L18 18M6 18L18 6"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>

@@ -12,6 +12,7 @@ import { finalize } from 'rxjs/operators';
 import { Page } from '../../../core/models/api';
 import { DepartmentResponse } from '../../../core/models/department';
 import { DepartmentsService } from '../../../core/services/departments.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 type ActiveFilter = '' | 'true' | 'false';
 
@@ -24,6 +25,7 @@ type ActiveFilter = '' | 'true' | 'false';
 })
 export class DepartmentListComponent implements OnInit {
   private readonly departmentsService = inject(DepartmentsService);
+  private readonly toast = inject(ToastService);
 
   readonly loading = signal(false);
   readonly page = signal<Page<DepartmentResponse> | null>(null);
@@ -106,8 +108,15 @@ export class DepartmentListComponent implements OnInit {
         })
       )
       .subscribe({
-        next: () => this.loadPage(this.pageIndex),
-        error: err => this.error.set(this.resolveErrorMessage(err))
+        next: () => {
+          this.toast.success('Cập nhật trạng thái phòng ban thành công.');
+          this.loadPage(this.pageIndex);
+        },
+        error: err => {
+          const message = this.resolveErrorMessage(err);
+          this.error.set(message);
+          this.toast.error(message);
+        }
       });
   }
 
@@ -141,7 +150,9 @@ export class DepartmentListComponent implements OnInit {
           this.pageSize = result.size;
         },
         error: err => {
-          this.error.set(this.resolveErrorMessage(err));
+          const message = this.resolveErrorMessage(err);
+          this.error.set(message);
+          this.toast.error(message);
           this.page.set(null);
         }
       });
