@@ -223,6 +223,11 @@ record UpdateUserRequest(String email, String role, Long departmentId, Boolean a
 ---
 
 ## 14) cURL mẫu (dev)
+
+**Tài liệu & Postman**
+- README quick guide: `README.md`
+- Collection: `postman/DepartmentManagement.postman_collection.json` (sử dụng biến `baseUrl`)
+
 ```bash
 # Tạo Department (ADMIN)
 curl -X POST http://localhost:8080/api/departments   -H "Content-Type: application/json"   -b cookies.txt   -d '{"code":"OPS","name":"Operations","description":"Ops team"}'
