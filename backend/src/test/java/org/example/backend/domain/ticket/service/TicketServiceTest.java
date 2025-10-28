@@ -1,4 +1,4 @@
-﻿package org.example.backend.domain.ticket.service;
+package org.example.backend.domain.ticket.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.example.backend.domain.auth.service.AuthUserDetails;
+import org.example.backend.domain.department.entity.Department;
 import org.example.backend.domain.ticket.entity.Category;
 import org.example.backend.domain.ticket.entity.Ticket;
 import org.example.backend.domain.ticket.enums.TicketPriority;
@@ -72,7 +73,7 @@ class TicketServiceTest {
         given(userRepository.findById(1L)).willReturn(Optional.of(reporter));
         given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
         given(ticketNumberGenerator.nextTicketNumber()).willReturn("ITSM-2025-0001");
-        given(ticketRepository.save(any(Ticket.class))).willAnswer(inv -> inv.getArgument(0));
+        given(ticketRepository.save(any(Ticket.class))).willAnswer(invocation -> invocation.getArgument(0));
 
         Ticket saved = ticketService.createTicket(command, endUser);
 
@@ -130,7 +131,7 @@ class TicketServiceTest {
     }
 
     private User user(Long id, UserRole role) {
-        User user = new User("user" + id, "mail" + id + "@example.com", "pwd", "User" + id, role, null);
+        User user = new User("user" + id, "mail" + id + "@example.com", "pwd", "User" + id, role, (Department) null);
         ReflectionTestUtils.setField(user, "id", id);
         return user;
     }

@@ -53,11 +53,12 @@ class UserControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        itDepartmentId = departmentRepository.findAll().stream()
-                .filter(dept -> "IT".equals(dept.getName()))
-                .map(dept -> dept.getId())
-                .findFirst()
-                .orElseThrow();
+        var itDepartment = departmentRepository.findByCodeIgnoreCase("IT")
+                .orElseGet(() -> departmentRepository.save(new org.example.backend.domain.department.entity.Department("IT", "Information Technology", "Tech team")));
+        itDepartmentId = itDepartment.getId();
+
+        ensureUserExists("admin", "Admin@123", UserRole.ADMIN);
+        ensureUserExists("agent", "Agent@123", UserRole.AGENT);
     }
 
     @Test
@@ -78,7 +79,11 @@ class UserControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.username").value("charlie"))
-                .andExpect(jsonPath("$.mustChangePassword").value(true));
+                .andExpect(jsonPath("$.mustChangePassword").value(true))
+                .andExpect(jsonPath("$.department.id").value(itDepartmentId))
+                .andExpect(jsonPath("$.department.code").value("IT"))
+                .andExpect(jsonPath("$.department.name").value("Information Technology"))
+                .andExpect(jsonPath("$.departmentId").value(itDepartmentId));
 
         assertThat(userRepository.existsByUsername("charlie")).isTrue();
     }
@@ -133,14 +138,15 @@ class UserControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.mustChangePassword").value(true));
+                .andExpect(jsonPath("$.mustChangePassword").value(true))
+                .andExpect(jsonPath("$.department.id").value(itDepartmentId));
     }
 
     @Test
     void updateUser_preventDeactivatingSelf() throws Exception {
         User admin = userRepository.findByUsername("admin").orElseThrow();
 
-        String payload = objectMapper.writeValueAsString(new UpdateUserPayload(null, null, null, null, false));
+        String payload = objectMapper.writeValueAsString(new UpdateUserPayload(null, null, null, null, null, false));
 
         mockMvc.perform(patch("/api/users/" + admin.getId())
                         .with(SecurityMockMvcRequestPostProcessors.user(AuthUserDetails.from(admin)))
@@ -151,12 +157,32 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value("CONFLICT"));
     }
 
+    @Test
+    void updateUser_canClearDepartment() throws Exception {
+        User target = ensureUserExists("deptuser", "Dept@123");
+
+        String payload = objectMapper.writeValueAsString(new UpdateUserPayload(null, null, null, null, true, null));
+
+        mockMvc.perform(patch("/api/users/" + target.getId())
+                        .with(SecurityMockMvcRequestPostProcessors.user(authUser("admin")))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.department").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.departmentId").value(org.hamcrest.Matchers.nullValue()));
+    }
+
     private AuthUserDetails authUser(String username) {
         User user = userRepository.findByUsername(username).orElseThrow();
         return AuthUserDetails.from(user);
     }
 
     private User ensureUserExists(String username, String rawPassword) {
+        return ensureUserExists(username, rawPassword, UserRole.END_USER);
+    }
+
+    private User ensureUserExists(String username, String rawPassword, UserRole role) {
         return userRepository.findByUsername(username)
                 .orElseGet(() -> {
                     var department = departmentRepository.findById(itDepartmentId).orElseThrow();
@@ -165,10 +191,11 @@ class UserControllerIntegrationTest {
                             username + "@example.com",
                             passwordEncoder.encode(rawPassword),
                             username,
-                            UserRole.END_USER,
+                            role,
                             department
                     );
                     user.setMustChangePassword(true);
+                    user.setActive(true);
                     return userRepository.save(user);
                 });
     }
@@ -178,6 +205,7 @@ class UserControllerIntegrationTest {
             String email,
             String fullName,
             UserRole role,
+            Boolean clearDepartment,
             Boolean isActive
     ) {
     }
