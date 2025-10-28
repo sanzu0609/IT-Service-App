@@ -1,9 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { UsersService, CreateUserPayload, UpdateUserPayload } from '../../../core/services/users.service';
 import { User } from '../../../core/models/user';
+import { DepartmentsService } from '../../../core/services/departments.service';
+import { DepartmentMinimalResponse } from '../../../core/models/department';
 
 @Component({
   selector: 'app-user-form-modal',
@@ -11,7 +14,7 @@ import { User } from '../../../core/models/user';
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './user-form.component.html'
 })
-export class UserFormComponent implements OnChanges {
+export class UserFormComponent implements OnInit, OnChanges, OnDestroy {
   @Input() open = false;
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() user: User | null = null;
@@ -21,6 +24,7 @@ export class UserFormComponent implements OnChanges {
 
   private readonly fb = inject(FormBuilder);
   private readonly usersService = inject(UsersService);
+  private readonly departmentsService = inject(DepartmentsService);
 
   readonly roles = ['ADMIN', 'AGENT', 'END_USER'] as const;
 
@@ -35,6 +39,11 @@ export class UserFormComponent implements OnChanges {
 
   saving = false;
   errorMessage = '';
+  departments: DepartmentMinimalResponse[] = [];
+  departmentsLoading = false;
+  departmentsError: string | null = null;
+
+  private departmentsSub: Subscription | null = null;
 
   get title(): string {
     return this.mode === 'edit' ? 'Edit user' : 'Create user';
@@ -42,6 +51,10 @@ export class UserFormComponent implements OnChanges {
 
   get formDisabled(): boolean {
     return this.loading || this.saving;
+  }
+
+  ngOnInit(): void {
+    this.loadDepartments();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -52,6 +65,10 @@ export class UserFormComponent implements OnChanges {
     if (changes['open'] && !this.open) {
       this.resetForm();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.departmentsSub?.unsubscribe();
   }
 
   submit(): void {
@@ -89,16 +106,24 @@ export class UserFormComponent implements OnChanges {
     this.closed.emit();
   }
 
+  retryLoadDepartments(): void {
+    this.loadDepartments();
+  }
+
   private buildPayloads(): { createPayload?: CreateUserPayload; updatePayload: UpdateUserPayload } {
     const raw = this.form.getRawValue();
     const trimmedEmail = raw.email.trim();
     const trimmedFullName = raw.fullName?.trim();
+    const departmentId =
+      raw.departmentId === undefined || raw.departmentId === null
+        ? undefined
+        : Number(raw.departmentId);
 
     const updatePayload: UpdateUserPayload = {
       email: trimmedEmail,
       fullName: trimmedFullName ? trimmedFullName : undefined,
       role: raw.role,
-      departmentId: raw.departmentId ?? undefined,
+      departmentId,
       active: raw.active
     };
 
@@ -111,7 +136,7 @@ export class UserFormComponent implements OnChanges {
       email: trimmedEmail,
       fullName: trimmedFullName ? trimmedFullName : undefined,
       role: raw.role,
-      departmentId: raw.departmentId ?? undefined,
+      departmentId,
       active: raw.active
     };
 
@@ -124,6 +149,7 @@ export class UserFormComponent implements OnChanges {
     }
 
     if (this.mode === 'edit' && this.user) {
+      this.ensureDepartmentOption(this.user.departmentId ?? undefined);
       this.form.patchValue({
         username: this.user.username,
         email: this.user.email,
@@ -165,5 +191,63 @@ export class UserFormComponent implements OnChanges {
       }
     }
     return 'Unable to save user. Please try again.';
+  }
+
+  private loadDepartments(): void {
+    this.departmentsLoading = true;
+    this.departmentsError = null;
+    this.departmentsSub?.unsubscribe();
+
+    this.departmentsSub = this.departmentsService
+      .minimal()
+      .pipe(finalize(() => (this.departmentsLoading = false)))
+      .subscribe({
+        next: departments => {
+          this.departments = departments ?? [];
+          this.ensureDepartmentOption(this.user?.departmentId ?? undefined);
+        },
+        error: err => {
+          this.departments = [];
+          this.departmentsError = this.resolveDepartmentsError(err);
+        }
+      });
+  }
+
+  private ensureDepartmentOption(departmentId: number | null | undefined): void {
+    if (
+      departmentId === undefined ||
+      departmentId === null ||
+      !Array.isArray(this.departments) ||
+      !this.departments.length
+    ) {
+      return;
+    }
+    const exists = this.departments.some(dept => dept.id === departmentId);
+    if (exists) {
+      return;
+    }
+    this.departments = [
+      ...this.departments,
+      {
+        id: departmentId,
+        code: 'INACTIVE',
+        name: `Department #${departmentId}`
+      }
+    ];
+  }
+
+  private resolveDepartmentsError(error: unknown): string {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'error' in error &&
+      typeof (error as { error: unknown }).error === 'object'
+    ) {
+      const payload = (error as { error: { message?: string } }).error;
+      if (payload?.message) {
+        return payload.message;
+      }
+    }
+    return 'Unable to load departments. Please try again.';
   }
 }
