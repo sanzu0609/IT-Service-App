@@ -55,8 +55,9 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/**", "/api/csrf", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/users/change-password").authenticated()
-                        .requestMatchers("/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/change-password").authenticated()
+                        .requestMatchers("/api/departments/minimal").authenticated()
+                        .requestMatchers("/api/users/**", "/api/departments/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
