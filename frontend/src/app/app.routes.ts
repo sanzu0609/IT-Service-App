@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -23,9 +24,34 @@ export const routes: Routes = [
       },
       {
         path: 'admin/users',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/users/users-placeholder.component').then(
             m => m.UsersPlaceholderComponent
+          )
+      },
+      {
+        path: 'admin/departments',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/departments/list/department-list.component').then(
+            m => m.DepartmentListComponent
+          )
+      },
+      {
+        path: 'admin/departments/form/new',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/departments/form/department-form.component').then(
+            m => m.DepartmentFormComponent
+          )
+      },
+      {
+        path: 'admin/departments/form/:id',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/departments/form/department-form.component').then(
+            m => m.DepartmentFormComponent
           )
       }
     ]
