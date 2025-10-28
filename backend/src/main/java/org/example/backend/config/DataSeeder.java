@@ -43,12 +43,21 @@ public class DataSeeder implements CommandLineRunner {
 
     private Map<String, Long> seedDepartments() {
         Map<String, Long> departmentIds = new LinkedHashMap<>();
-        List<String> departments = List.of("IT", "HR");
+        Map<String, String> departments = Map.of(
+                "IT", "Information Technology",
+                "HR", "Human Resources"
+        );
 
-        for (String name : departments) {
-            Department department = departmentRepository.findByName(name)
-                    .orElseGet(() -> departmentRepository.save(new Department(name)));
-            departmentIds.put(name, department.getId());
+        departments.forEach((code, name) -> {
+            Department department = departmentRepository.findByCodeIgnoreCase(code)
+                    .orElseGet(() -> departmentRepository.save(
+                            new Department(code, name, name + " team")
+                    ));
+            departmentIds.put(code, department.getId());
+        });
+
+        if (departmentIds.isEmpty()) {
+            return departmentIds;
         }
 
         return departmentIds;
