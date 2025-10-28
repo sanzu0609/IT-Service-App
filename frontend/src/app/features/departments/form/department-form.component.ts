@@ -1,197 +1,199 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  EventEmitter,
+  Input,
+  OnChanges,
   OnDestroy,
-  OnInit,
-  computed,
-  inject,
-  signal
+  Output,
+  SimpleChanges,
+  inject
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { DepartmentResponse } from '../../../core/models/department';
 import { DepartmentsService } from '../../../core/services/departments.service';
 import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
-  selector: 'app-department-form',
+  selector: 'app-department-form-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './department-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DepartmentFormComponent implements OnInit, OnDestroy {
+export class DepartmentFormComponent implements OnChanges, OnDestroy {
+  @Input() open = false;
+  @Input() mode: 'create' | 'edit' = 'create';
+  @Input() department: DepartmentResponse | null = null;
+  @Input() loading = false;
+  @Output() closed = new EventEmitter<void>();
+  @Output() saved = new EventEmitter<void>();
+
   private readonly fb = inject(FormBuilder);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly departmentsService = inject(DepartmentsService);
   private readonly toast = inject(ToastService);
-
-  private readonly subscriptions = new Subscription();
-
-  readonly loading = signal(false);
-  readonly saving = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly conflictError = signal(false);
-  readonly department = signal<DepartmentResponse | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     code: ['', [Validators.required]],
     name: ['', [Validators.required]],
     description: [''],
-    active: [true]
+    active: this.fb.nonNullable.control<boolean>(true)
   });
 
-  readonly isEdit = computed(() => !!this.department());
-  readonly title = computed(() =>
-    this.isEdit() ? 'Cập nhật phòng ban' : 'Tạo phòng ban'
-  );
-  readonly submitLabel = computed(() =>
-    this.isEdit() ? 'Lưu thay đổi' : 'Tạo mới'
-  );
+  saving = false;
+  errorMessage = '';
+  private submitSub: Subscription | null = null;
 
-  ngOnInit(): void {
-    const idParam = this.route.snapshot.paramMap.get('id');
-    if (idParam) {
-      const id = Number(idParam);
-      if (Number.isNaN(id)) {
-        this.error.set('Không tìm thấy phòng ban.');
-        return;
-      }
-      this.loadDepartment(id);
-    } else {
-      this.form.controls.active.disable();
-      this.form.controls.active.setValue(true);
+  get title(): string {
+    return this.mode === 'edit' ? 'Edit department' : 'Create department';
+  }
+
+  get submitLabel(): string {
+    return this.mode === 'edit' ? 'Save changes' : 'Create';
+  }
+
+  get formDisabled(): boolean {
+    return this.loading || this.saving;
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['open'] || changes['mode'] || changes['department']) {
+      this.applyState();
+    }
+
+    if (changes['open'] && !this.open) {
+      this.resetForm();
     }
   }
 
   ngOnDestroy(): void {
-    this.subscriptions.unsubscribe();
+    this.submitSub?.unsubscribe();
   }
 
   submit(): void {
-    if (this.form.invalid || this.saving()) {
+    if (this.form.invalid || this.formDisabled) {
       this.form.markAllAsTouched();
       return;
     }
 
-    this.conflictError.set(false);
-    this.error.set(null);
-    this.saving.set(true);
+    const { code, name, description, active } = this.form.getRawValue();
+    const trimmedName = name.trim();
+    const trimmedDescription = description?.trim();
 
-    if (this.isEdit()) {
-      this.handleUpdate();
-    } else {
-      this.handleCreate();
+    if (!trimmedName) {
+      this.form.controls.name.setErrors({ required: true });
+      this.form.controls.name.markAsTouched();
+      return;
     }
-  }
 
-  navigateBack(): void {
-    this.router.navigate(['/admin/departments']);
-  }
+    this.errorMessage = '';
+    this.saving = true;
+    this.submitSub?.unsubscribe();
 
-  private loadDepartment(id: number): void {
-    this.loading.set(true);
-    this.error.set(null);
+    if (this.mode === 'create') {
+      const payload = {
+        code: code.trim().toUpperCase(),
+        name: trimmedName,
+        description: trimmedDescription ? trimmedDescription : undefined,
+        active: true
+      };
 
-    const sub = this.departmentsService
-      .get(id)
-      .pipe(finalize(() => this.loading.set(false)))
-      .subscribe({
-        next: department => {
-          this.department.set(department);
-          this.patchForm(department);
-        },
-        error: err => {
-          const message = this.resolveErrorMessage(err);
-          this.error.set(message);
-          this.toast.error(message);
-        }
-      });
+      this.submitSub = this.departmentsService
+        .create(payload)
+        .pipe(finalize(() => (this.saving = false)))
+        .subscribe({
+          next: () => {
+            this.toast.success('Department created successfully.');
+            this.saved.emit();
+            this.resetForm();
+          },
+          error: err => {
+            this.errorMessage = this.resolveErrorMessage(err);
+          }
+        });
+      return;
+    }
 
-    this.subscriptions.add(sub);
-  }
+    if (!this.department) {
+      this.errorMessage = 'Department not found.';
+      this.saving = false;
+      return;
+    }
 
-  private patchForm(department: DepartmentResponse): void {
-    this.form.controls.active.enable({ emitEvent: false });
-    this.form.reset({
-      code: department.code,
-      name: department.name,
-      description: department.description ?? '',
-      active: department.active
-    });
-    this.form.controls.code.disable();
-  }
-
-  private handleCreate(): void {
-    const raw = this.form.getRawValue();
-    const normalizedCode = raw.code.trim().toUpperCase();
-    const payload = {
-      code: normalizedCode,
-      name: raw.name.trim(),
-      description: raw.description?.trim() ? raw.description.trim() : undefined,
-      active: true
+    const patch = {
+      name: trimmedName,
+      description: trimmedDescription ? trimmedDescription : null,
+      active
     };
 
-    const sub = this.departmentsService
-      .create(payload)
-      .pipe(finalize(() => this.saving.set(false)))
+    this.submitSub = this.departmentsService
+      .update(this.department.id, patch)
+      .pipe(finalize(() => (this.saving = false)))
       .subscribe({
         next: () => {
-          this.toast.success('Tạo phòng ban thành công.');
-          this.navigateBack();
+          this.toast.success('Department updated successfully.');
+          this.saved.emit();
         },
-        error: err => this.handleSubmitError(err)
+        error: err => {
+          this.errorMessage = this.resolveErrorMessage(err);
+        }
       });
-
-    this.subscriptions.add(sub);
   }
 
-  private handleUpdate(): void {
-    const current = this.department();
-    if (!current) {
-      this.saving.set(false);
-      this.error.set('Không tìm thấy phòng ban.');
+  close(): void {
+    if (this.saving) {
+      return;
+    }
+    this.resetForm();
+    this.closed.emit();
+  }
+
+  private applyState(): void {
+    if (!this.open) {
       return;
     }
 
-    const raw = this.form.getRawValue();
-    const patch = {
-      name: raw.name.trim(),
-      description: raw.description?.trim() ? raw.description.trim() : null,
-      active: raw.active
-    };
-
-    const sub = this.departmentsService
-      .update(current.id, patch)
-      .pipe(finalize(() => this.saving.set(false)))
-      .subscribe({
-        next: department => {
-          this.department.set(department);
-          this.toast.success('Cập nhật phòng ban thành công.');
-          this.navigateBack();
-        },
-        error: err => this.handleSubmitError(err)
+    if (this.mode === 'edit' && this.department) {
+      this.form.enable({ emitEvent: false });
+      this.form.reset({
+        code: this.department.code,
+        name: this.department.name,
+        description: this.department.description ?? '',
+        active: this.department.active
       });
-
-    this.subscriptions.add(sub);
+      this.form.controls.code.disable();
+      this.form.controls.active.enable();
+    } else if (this.mode === 'edit') {
+      this.form.reset({
+        code: '',
+        name: '',
+        description: '',
+        active: true
+      });
+      this.form.controls.code.disable();
+      this.form.controls.active.enable();
+    } else if (this.mode === 'create') {
+      this.resetForm();
+      this.form.controls.code.enable();
+      this.form.controls.active.disable();
+      this.form.controls.active.setValue(true, { emitEvent: false });
+    }
   }
 
-  private handleSubmitError(error: unknown): void {
-    if (this.isConflictError(error)) {
-      this.conflictError.set(true);
-      const message =
-        'Mã hoặc tên phòng ban đã tồn tại. Vui lòng kiểm tra lại.';
-      this.error.set(message);
-      this.toast.error(message);
-      return;
-    }
-    const message = this.resolveErrorMessage(error);
-    this.error.set(message);
-    this.toast.error(message);
+  private resetForm(): void {
+    this.form.reset({
+      code: '',
+      name: '',
+      description: '',
+      active: true
+    });
+    this.form.controls.code.enable();
+    this.form.controls.active.disable();
+    this.errorMessage = '';
+    this.saving = false;
   }
 
   private resolveErrorMessage(error: unknown): string {
@@ -199,10 +201,9 @@ export class DepartmentFormComponent implements OnInit, OnDestroy {
       typeof error === 'object' &&
       error !== null &&
       'status' in error &&
-      typeof (error as { status?: unknown }).status === 'number' &&
-      (error as { status: number }).status === 404
+      (error as { status?: unknown }).status === 409
     ) {
-      return 'Không tìm thấy phòng ban.';
+      return 'Department code or name already exists.';
     }
 
     if (
@@ -217,15 +218,7 @@ export class DepartmentFormComponent implements OnInit, OnDestroy {
       }
     }
 
-    return 'Không thể lưu phòng ban lúc này. Vui lòng thử lại sau.';
-  }
-
-  private isConflictError(error: unknown): boolean {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'status' in error &&
-      (error as { status?: unknown }).status === 409
-    );
+    return 'Unable to save department. Please try again.';
   }
 }
+

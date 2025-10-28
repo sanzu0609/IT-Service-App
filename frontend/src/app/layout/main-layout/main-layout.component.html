@@ -14,6 +14,14 @@
         >
           Users
         </a>
+        <a
+          *ngIf="isAdmin()"
+          routerLink="/admin/departments"
+          routerLinkActive="text-emerald-600"
+          class="hover:text-emerald-500"
+        >
+          Departments
+        </a>
         <div class="relative">
           <button
             type="button"

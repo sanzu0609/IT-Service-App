@@ -1,29 +1,31 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   inject,
   signal
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { Page } from '../../../core/models/api';
 import { DepartmentResponse } from '../../../core/models/department';
 import { DepartmentsService } from '../../../core/services/departments.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { DepartmentFormComponent } from '../form/department-form.component';
 
 type ActiveFilter = '' | 'true' | 'false';
 
 @Component({
   selector: 'app-department-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, DepartmentFormComponent],
   templateUrl: './department-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DepartmentListComponent implements OnInit {
+export class DepartmentListComponent implements OnInit, OnDestroy {
   private readonly departmentsService = inject(DepartmentsService);
   private readonly toast = inject(ToastService);
 
@@ -31,48 +33,64 @@ export class DepartmentListComponent implements OnInit {
   readonly page = signal<Page<DepartmentResponse> | null>(null);
   readonly error = signal<string | null>(null);
   readonly toggling = signal<number[]>([]);
+  readonly statusMessage = signal<string | null>(null);
 
-  filters: { q: string; active: ActiveFilter } = {
+  readonly formOpen = signal(false);
+  readonly formMode = signal<'create' | 'edit'>('create');
+  readonly formLoading = signal(false);
+  readonly editingDepartment = signal<DepartmentResponse | null>(null);
+
+  filters: { q?: string; active?: ActiveFilter; page: number; size: number } = {
     q: '',
-    active: ''
+    active: '',
+    page: 0,
+    size: 10
   };
 
-  readonly pageSizeOptions = [10, 20, 50];
-  pageIndex = 0;
-  pageSize = 20;
+  private listSub: Subscription | null = null;
+  private formSub: Subscription | null = null;
 
   ngOnInit(): void {
-    this.loadPage(0);
+    this.load();
+  }
+
+  ngOnDestroy(): void {
+    this.listSub?.unsubscribe();
+    this.formSub?.unsubscribe();
+  }
+
+  trackById(_: number, dept: DepartmentResponse): number {
+    return dept.id;
   }
 
   applyFilters(): void {
     if (this.loading()) {
       return;
     }
-    this.pageIndex = 0;
-    this.loadPage(0);
+    this.filters.page = 0;
+    this.statusMessage.set(null);
+    this.load(0);
   }
 
   resetFilters(): void {
     if (this.loading()) {
       return;
     }
-    this.filters = { q: '', active: '' };
-    this.pageIndex = 0;
-    this.loadPage(0);
+    this.filters = { ...this.filters, q: '', active: '', page: 0 };
+    this.statusMessage.set(null);
+    this.load(0);
   }
 
-  changePage(target: number): void {
-    if (this.loading() || target === this.pageIndex) {
+  changePage(direction: 1 | -1): void {
+    const current = this.page();
+    if (!current) {
       return;
     }
-
-    const totalPages = this.page()?.totalPages ?? 0;
-    if (target < 0 || target >= totalPages) {
+    const next = current.number + direction;
+    if (next < 0 || next >= current.totalPages) {
       return;
     }
-
-    this.loadPage(target);
+    this.load(next);
   }
 
   changePageSize(size: number | string): void {
@@ -80,16 +98,55 @@ export class DepartmentListComponent implements OnInit {
     if (Number.isNaN(parsed) || parsed <= 0) {
       return;
     }
-    if (this.loading() || parsed === this.pageSize) {
-      return;
-    }
-    this.pageSize = parsed;
-    this.pageIndex = 0;
-    this.loadPage(0);
+    this.filters.size = parsed;
+    this.filters.page = 0;
+    this.statusMessage.set(null);
+    this.load(0);
   }
 
-  isToggling(id: number): boolean {
-    return this.toggling().includes(id);
+  openCreate(): void {
+    this.statusMessage.set(null);
+    this.formMode.set('create');
+    this.editingDepartment.set(null);
+    this.formLoading.set(false);
+    this.formOpen.set(true);
+  }
+
+  openEdit(row: DepartmentResponse): void {
+    this.statusMessage.set(null);
+    this.formMode.set('edit');
+    this.formLoading.set(true);
+    this.formOpen.set(true);
+    this.editingDepartment.set(null);
+
+    this.formSub?.unsubscribe();
+    this.formSub = this.departmentsService.get(row.id).subscribe({
+      next: detail => {
+        this.editingDepartment.set(detail);
+        this.formLoading.set(false);
+      },
+      error: err => {
+        const message = this.resolveErrorMessage(err);
+        this.toast.error(message);
+        this.error.set(message);
+        this.formLoading.set(false);
+        this.formOpen.set(false);
+      }
+    });
+  }
+
+  handleFormSaved(): void {
+    this.formOpen.set(false);
+    this.formLoading.set(false);
+    this.editingDepartment.set(null);
+    this.statusMessage.set('Department saved successfully.');
+    this.load(this.filters.page);
+  }
+
+  handleFormClosed(): void {
+    this.formOpen.set(false);
+    this.formLoading.set(false);
+    this.editingDepartment.set(null);
   }
 
   toggleActive(department: DepartmentResponse): void {
@@ -109,49 +166,52 @@ export class DepartmentListComponent implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.toast.success('Cập nhật trạng thái phòng ban thành công.');
-          this.loadPage(this.pageIndex);
+          this.toast.success('Department status updated.');
+          this.statusMessage.set('Department status updated.');
+          this.load(this.filters.page);
         },
         error: err => {
           const message = this.resolveErrorMessage(err);
           this.error.set(message);
+          this.statusMessage.set(null);
           this.toast.error(message);
         }
       });
   }
 
-  trackById(_index: number, item: DepartmentResponse): number {
-    return item.id;
+  isToggling(id: number): boolean {
+    return this.toggling().includes(id);
   }
 
-  private loadPage(pageIndex: number): void {
+  private load(page: number = this.filters.page): void {
+    this.listSub?.unsubscribe();
     this.loading.set(true);
     this.error.set(null);
 
-    const q = this.filters.q.trim();
-    const active =
-      this.filters.active === ''
-        ? undefined
-        : this.filters.active === 'true';
+    this.filters.page = page;
 
-    this.departmentsService
-      .list({
-        q: q ? q : undefined,
-        active,
-        page: pageIndex,
-        size: this.pageSize,
-        sort: 'createdAt,desc'
-      })
+    const params = {
+      q: this.filters.q?.trim() || undefined,
+      active:
+        this.filters.active === ''
+          ? undefined
+          : this.filters.active === 'true',
+      page: this.filters.page,
+      size: this.filters.size,
+      sort: 'createdAt,desc'
+    };
+
+    this.listSub = this.departmentsService
+      .list(params)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: result => {
-          this.page.set(result);
-          this.pageIndex = result.number;
-          this.pageSize = result.size;
+        next: (response: Page<DepartmentResponse>) => {
+          this.page.set(response);
         },
         error: err => {
           const message = this.resolveErrorMessage(err);
           this.error.set(message);
+          this.statusMessage.set(null);
           this.toast.error(message);
           this.page.set(null);
         }
@@ -166,10 +226,10 @@ export class DepartmentListComponent implements OnInit {
       typeof (error as { error: unknown }).error === 'object'
     ) {
       const payload = (error as { error: { message?: string } }).error;
-      if (typeof payload?.message === 'string' && payload.message.trim()) {
+      if (payload?.message) {
         return payload.message;
       }
     }
-    return 'Không thể tải danh sách phòng ban. Vui lòng thử lại sau.';
+    return 'Unable to load departments. Please try again.';
   }
 }

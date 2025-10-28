@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
@@ -62,15 +62,16 @@ export class DepartmentsService {
   }
 
   minimal(active = true): Observable<DepartmentMinimalResponse[]> {
-    const params =
-      active === undefined || active === null
-        ? {}
-        : { active: String(active) };
+    const params: Record<string, string> = {};
+    if (active !== undefined && active !== null) {
+      params['active'] = String(active);
+    }
 
     return this.http.get<DepartmentMinimalResponse[]>('/api/departments/minimal', {
-      params,
+      params: Object.keys(params).length ? params : undefined,
       withCredentials: true
     });
   }
 }
+
 

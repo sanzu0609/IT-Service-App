@@ -26,8 +26,8 @@ export const routes: Routes = [
         path: 'admin/users',
         canActivate: [adminGuard],
         loadComponent: () =>
-          import('./features/users/users-placeholder.component').then(
-            m => m.UsersPlaceholderComponent
+          import('./features/users/list/users-list.component').then(
+            m => m.UsersListComponent
           )
       },
       {
@@ -36,22 +36,6 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/departments/list/department-list.component').then(
             m => m.DepartmentListComponent
-          )
-      },
-      {
-        path: 'admin/departments/form/new',
-        canActivate: [adminGuard],
-        loadComponent: () =>
-          import('./features/departments/form/department-form.component').then(
-            m => m.DepartmentFormComponent
-          )
-      },
-      {
-        path: 'admin/departments/form/:id',
-        canActivate: [adminGuard],
-        loadComponent: () =>
-          import('./features/departments/form/department-form.component').then(
-            m => m.DepartmentFormComponent
           )
       }
     ]
