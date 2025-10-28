@@ -2,6 +2,7 @@ package org.example.backend.domain.user.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.Optional;
+import org.example.backend.domain.department.entity.Department;
 import org.example.backend.domain.user.dto.request.CreateUserRequest;
 import org.example.backend.domain.user.dto.request.ResetPasswordRequest;
 import org.example.backend.domain.user.dto.request.UpdateUserRequest;
@@ -84,7 +85,9 @@ class UserAdminServiceTest {
     void createUser_shouldPersistWhenValid() {
         given(userRepository.existsByUsername("bob")).willReturn(false);
         given(userRepository.existsByEmail("bob@example.com")).willReturn(false);
-        given(departmentRepository.existsById(1L)).willReturn(true);
+        Department department = new Department("IT", "Information Technology", "Tech");
+        ReflectionTestUtils.setField(department, "id", 1L);
+        given(departmentRepository.findById(1L)).willReturn(Optional.of(department));
         given(passwordEncoder.encode("Temp@123")).willReturn("encoded");
         given(userRepository.save(any(User.class))).willAnswer(invocation -> {
             User user = invocation.getArgument(0);
@@ -115,6 +118,7 @@ class UserAdminServiceTest {
                 null,
                 null,
                 null,
+                null,
                 false
         );
 
@@ -134,6 +138,7 @@ class UserAdminServiceTest {
                 null,
                 null,
                 UserRole.AGENT,
+                null,
                 null,
                 null
         );
@@ -159,7 +164,7 @@ class UserAdminServiceTest {
     void updateUser_shouldThrowWhenDepartmentNotFound() {
         User existing = buildUser(2L, UserRole.AGENT, true);
         given(userRepository.findById(2L)).willReturn(Optional.of(existing));
-        given(departmentRepository.existsById(999L)).willReturn(false);
+        given(departmentRepository.findById(999L)).willReturn(Optional.empty());
 
         UpdateUserRequest request = new UpdateUserRequest(
                 null,
@@ -167,6 +172,7 @@ class UserAdminServiceTest {
                 null,
                 null,
                 999L,
+                null,
                 null
         );
 
@@ -176,7 +182,7 @@ class UserAdminServiceTest {
     }
 
     private User buildUser(Long id, UserRole role, boolean active) {
-        User user = new User("user" + id, "user" + id + "@example.com", "hash", "User " + id, role, 1L);
+        User user = new User("user" + id, "user" + id + "@example.com", "hash", "User " + id, role, null);
         user.setActive(active);
         user.setMustChangePassword(false);
         ReflectionTestUtils.setField(user, "id", id);

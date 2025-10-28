@@ -5,11 +5,12 @@ import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { MeResponse } from '../../core/models/user';
 import { ChangePasswordModalComponent } from '../../features/auth/change-password/change-password-modal.component';
+import { ToastContainerComponent } from '../../shared/components/toast-container/toast-container.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterOutlet, ChangePasswordModalComponent],
+  imports: [CommonModule, RouterLink, RouterOutlet, ChangePasswordModalComponent, ToastContainerComponent],
   templateUrl: './main-layout.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })

@@ -20,6 +20,9 @@ public class AuthUserDetails implements UserDetails {
     private final boolean active;
     private final List<GrantedAuthority> authorities;
     private final boolean mustChangePassword;
+    private final Long departmentId;
+    private final String departmentCode;
+    private final String departmentName;
 
     private AuthUserDetails(
             Long id,
@@ -27,7 +30,10 @@ public class AuthUserDetails implements UserDetails {
             String password,
             UserRole role,
             boolean active,
-            boolean mustChangePassword
+            boolean mustChangePassword,
+            Long departmentId,
+            String departmentCode,
+            String departmentName
     ) {
         this.id = id;
         this.username = username;
@@ -36,16 +42,23 @@ public class AuthUserDetails implements UserDetails {
         this.active = active;
         this.mustChangePassword = mustChangePassword;
         this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        this.departmentId = departmentId;
+        this.departmentCode = departmentCode;
+        this.departmentName = departmentName;
     }
 
     public static AuthUserDetails from(User user) {
+        var department = user.getDepartment();
         return new AuthUserDetails(
                 user.getId(),
                 user.getUsername(),
                 user.getPasswordHash(),
                 user.getRole(),
                 user.isActive(),
-                user.isMustChangePassword()
+                user.isMustChangePassword(),
+                department != null ? department.getId() : null,
+                department != null ? department.getCode() : null,
+                department != null ? department.getName() : null
         );
     }
 
@@ -59,6 +72,18 @@ public class AuthUserDetails implements UserDetails {
 
     public boolean isMustChangePassword() {
         return mustChangePassword;
+    }
+
+    public Long getDepartmentId() {
+        return departmentId;
+    }
+
+    public String getDepartmentCode() {
+        return departmentCode;
+    }
+
+    public String getDepartmentName() {
+        return departmentName;
     }
 
     @Override

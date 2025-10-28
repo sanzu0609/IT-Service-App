@@ -1,8 +1,9 @@
 package org.example.backend.domain.user.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
+import org.example.backend.domain.department.dto.DepartmentLiteDto;
+import org.example.backend.domain.department.entity.Department;
 import org.example.backend.domain.user.dto.request.CreateUserRequest;
 import org.example.backend.domain.user.dto.request.ResetPasswordRequest;
 import org.example.backend.domain.user.dto.request.UpdateUserRequest;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserAdminService {
@@ -40,13 +42,15 @@ public class UserAdminService {
         validateUsernameUniqueness(request.username());
         validateEmailUniqueness(request.email());
 
+        Department department = resolveDepartment(request.departmentId());
+
         User user = new User(
                 request.username(),
                 request.email(),
                 encodePassword(resolveTempPassword(request.tempPassword())),
                 request.fullName(),
                 request.role(),
-                resolveDepartmentId(request.departmentId())
+                department
         );
         user.setMustChangePassword(true);
         user.setActive(true);
@@ -80,7 +84,9 @@ public class UserAdminService {
         }
 
         if (request.departmentId() != null) {
-            user.setDepartmentId(resolveDepartmentId(request.departmentId()));
+            user.setDepartment(resolveDepartment(request.departmentId()));
+        } else if (Boolean.TRUE.equals(request.clearDepartment())) {
+            user.setDepartment(null);
         }
 
         if (request.username() != null && !request.username().isBlank()) {
@@ -198,41 +204,57 @@ public class UserAdminService {
         return tempPassword;
     }
 
-    private Long resolveDepartmentId(Long departmentId) {
+    private Department resolveDepartment(Long departmentId) {
         if (departmentId == null) {
             return null;
         }
-        if (!departmentRepository.existsById(departmentId)) {
-            throw new EntityNotFoundException("Department not found with id: " + departmentId);
+
+        Department department = departmentRepository.findById(departmentId)
+                .orElseThrow(() -> new EntityNotFoundException("Department not found with id: " + departmentId));
+
+        if (!department.isActive()) {
+            throw new IllegalStateException("Cannot assign inactive department.");
         }
-        return departmentId;
+
+        return department;
     }
 
     private UserSummaryResponse toSummary(User user) {
+        Department department = user.getDepartment();
         return new UserSummaryResponse(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getFullName(),
                 user.getRole().name(),
-                user.getDepartmentId(),
+                toLiteDto(department),
+                department != null ? department.getId() : null,
                 user.isActive(),
                 user.isMustChangePassword()
         );
     }
 
     private UserDetailResponse toDetail(User user) {
+        Department department = user.getDepartment();
         return new UserDetailResponse(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getFullName(),
                 user.getRole().name(),
-                user.getDepartmentId(),
+                toLiteDto(department),
+                department != null ? department.getId() : null,
                 user.isActive(),
                 user.isMustChangePassword(),
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );
+    }
+
+    private DepartmentLiteDto toLiteDto(Department department) {
+        if (department == null) {
+            return null;
+        }
+        return new DepartmentLiteDto(department.getId(), department.getCode(), department.getName());
     }
 }

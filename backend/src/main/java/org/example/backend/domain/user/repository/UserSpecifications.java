@@ -1,5 +1,6 @@
 package org.example.backend.domain.user.repository;
 
+import jakarta.persistence.criteria.JoinType;
 import org.example.backend.domain.user.entity.User;
 import org.example.backend.domain.user.enums.UserRole;
 import org.springframework.data.jpa.domain.Specification;
@@ -45,7 +46,10 @@ public final class UserSpecifications {
         if (departmentId == null) {
             return null;
         }
-        return (root, query, builder) -> builder.equal(root.get("departmentId"), departmentId);
+        return (root, query, builder) -> {
+            query.distinct(true);
+            return builder.equal(root.join("department", JoinType.INNER).get("id"), departmentId);
+        };
     }
 
     public static Specification<User> activeEquals(Boolean active) {

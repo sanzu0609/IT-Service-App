@@ -20,6 +20,8 @@ public record UpdateUserRequest(
         @Positive(message = "Department id must be positive")
         Long departmentId,
 
+        Boolean clearDepartment,
+
         Boolean isActive
 ) {
 }

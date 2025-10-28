@@ -1,0 +1,149 @@
+﻿<section class="flex w-full flex-col gap-4">
+  <header class="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="flex flex-col gap-1">
+      <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</label>
+      <select class="w-40 rounded border border-slate-300 px-3 py-2" [(ngModel)]="filters.active">
+        <option value="">All</option>
+        <option value="true">Active</option>
+        <option value="false">Inactive</option>
+      </select>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Search</label>
+      <input
+        class="w-64 rounded border border-slate-300 px-3 py-2"
+        placeholder="Code or name"
+        [(ngModel)]="filters.q"
+      />
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button
+        class="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+        type="button"
+        (click)="applyFilters()"
+      >
+        Apply
+      </button>
+      <button
+        class="rounded border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
+        type="button"
+        (click)="resetFilters()"
+      >
+        Reset
+      </button>
+    </div>
+
+    <div class="ml-auto">
+      <button
+        class="inline-flex items-center rounded border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+        type="button"
+        (click)="openCreate()"
+      >
+        + Create
+      </button>
+    </div>
+  </header>
+
+  <div *ngIf="statusMessage()" class="rounded border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+    {{ statusMessage() }}
+  </div>
+
+  <div *ngIf="error()" class="rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
+    {{ error() }}
+  </div>
+
+  <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <div *ngIf="loading()" class="p-6 text-center text-sm text-slate-500">Loading departments...</div>
+
+    <table *ngIf="page() as current" class="w-full table-fixed border-collapse text-sm">
+      <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <tr>
+          <th class="px-3 py-2">Code</th>
+          <th class="px-3 py-2">Name</th>
+          <th class="px-3 py-2">Status</th>
+          <th class="px-3 py-2">Created</th>
+          <th class="px-3 py-2 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let department of current.content; trackBy: trackById" class="border-t text-slate-700">
+          <td class="px-3 py-3 font-mono font-medium">{{ department.code }}</td>
+          <td class="px-3 py-3">{{ department.name }}</td>
+          <td class="px-3 py-3">
+            <span
+              class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
+              [ngClass]="department.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'"
+            >
+              {{ department.active ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td class="px-3 py-3 text-slate-500">{{ department.createdAt | date: 'short' }}</td>
+          <td class="px-3 py-3 text-right">
+            <button class="mr-3 text-blue-600 hover:underline" type="button" (click)="openEdit(department)">
+              Edit
+            </button>
+            <button
+              class="text-rose-600 hover:underline"
+              type="button"
+              (click)="toggleActive(department)"
+              [disabled]="isToggling(department.id)"
+            >
+              {{ department.active ? 'Deactivate' : 'Activate' }}
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="!current.content.length" class="border-t text-center text-slate-500">
+          <td colspan="5" class="px-3 py-8">No departments found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer *ngIf="page() as current" class="flex items-center justify-between text-sm text-slate-600">
+    <div>
+      Showing page {{ current.number + 1 }} of {{ current.totalPages || 1 }}
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        class="rounded border border-slate-300 px-3 py-1 disabled:opacity-40"
+        type="button"
+        [disabled]="current.number === 0"
+        (click)="changePage(-1)"
+      >
+        Previous
+      </button>
+      <button
+        class="rounded border border-slate-300 px-3 py-1 disabled:opacity-40"
+        type="button"
+        [disabled]="current.number + 1 >= current.totalPages"
+        (click)="changePage(1)"
+      >
+        Next
+      </button>
+    </div>
+    <div class="flex items-center gap-2">
+      <label class="text-xs font-semibold uppercase tracking-wide text-slate-500" for="dept-page-size">
+        Page size
+      </label>
+      <select
+        id="dept-page-size"
+        class="rounded border border-slate-300 px-2 py-1 text-sm"
+        [ngModel]="filters.size"
+        (ngModelChange)="changePageSize($event)"
+      >
+        <option *ngFor="let option of [10, 20, 50]" [value]="option">{{ option }}</option>
+      </select>
+    </div>
+  </footer>
+</section>
+
+<app-department-form-modal
+  [open]="formOpen()"
+  [mode]="formMode()"
+  [department]="editingDepartment()"
+  [loading]="formLoading()"
+  (saved)="handleFormSaved()"
+  (closed)="handleFormClosed()"
+></app-department-form-modal>

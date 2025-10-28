@@ -25,8 +25,18 @@ export const routes: Routes = [
       {
         path: 'admin/users',
         canActivate: [adminGuard],
-        loadChildren: () =>
-          import('./features/users/routes').then(m => m.USERS_ROUTES)
+        loadComponent: () =>
+          import('./features/users/list/users-list.component').then(
+            m => m.UsersListComponent
+          )
+      },
+      {
+        path: 'admin/departments',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/departments/list/department-list.component').then(
+            m => m.DepartmentListComponent
+          )
       }
     ]
   },
