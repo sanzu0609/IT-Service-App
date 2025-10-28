@@ -32,16 +32,18 @@ Thêm module **Department Management** (ADMIN-only), chuẩn hoá quan hệ **Us
 ---
 
 ### 3️⃣ DTOs
-Tạo các file:
-- `DepartmentLiteDto.java`  
-- `DepartmentDto.java`  
-- `CreateDepartmentRequest.java`  
-- `UpdateDepartmentRequest.java`  
+Tạo các file trong package org.example.backend.domain.department.dto:
 
-🧩 Rule:
-- `code` luôn uppercase trước khi lưu  
-- `name` và `code` phải unique  
-- `active` mặc định `true`
+- DepartmentResponse.java
+- DepartmentMinimalResponse.java
+- DepartmentCreateRequest.java
+- DepartmentUpdateRequest.java
+
+🧩 Rules:
+
+- code luôn UPPERCASE trước khi lưu (xử lý ở DepartmentService)
+- name và code phải unique (validation ở service layer)
+- active mặc định true nếu không truyền trong request
 
 ---
 
