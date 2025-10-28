@@ -1,0 +1,175 @@
+<section class="flex w-full flex-col gap-4">
+  <header class="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="flex flex-col gap-1">
+      <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Role</label>
+      <select class="w-40 rounded border border-slate-300 px-3 py-2" [(ngModel)]="filters.role">
+        <option [ngValue]="undefined">All roles</option>
+        <option *ngFor="let role of roles" [ngValue]="role">{{ role }}</option>
+      </select>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Active</label>
+      <select class="w-40 rounded border border-slate-300 px-3 py-2" [(ngModel)]="filters.active">
+        <option [ngValue]="undefined">All</option>
+        <option [ngValue]="true">Active</option>
+        <option [ngValue]="false">Inactive</option>
+      </select>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Search</label>
+      <input
+        class="w-64 rounded border border-slate-300 px-3 py-2"
+        placeholder="Username or email"
+        [(ngModel)]="filters.q"
+      />
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button
+        class="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+        type="button"
+        (click)="load()"
+      >
+        Apply
+      </button>
+      <button
+        class="rounded border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
+        type="button"
+        (click)="resetFilters()"
+      >
+        Reset
+      </button>
+    </div>
+
+    <div class="ml-auto">
+      <button
+        class="inline-flex items-center rounded border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+        type="button"
+        (click)="openCreate()"
+      >
+        + Create
+      </button>
+    </div>
+  </header>
+
+  <div *ngIf="resetMessage()" class="rounded border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+    {{ resetMessage() }}
+  </div>
+
+  <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <div *ngIf="loading()" class="p-6 text-center text-sm text-slate-500">Loading users�</div>
+    <div *ngIf="error()" class="p-4 text-sm text-red-600">{{ error() }}</div>
+
+    <table *ngIf="page() as current" class="w-full table-fixed border-collapse text-sm">
+      <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <tr>
+          <th class="px-3 py-2">Username</th>
+          <th class="px-3 py-2">Email</th>
+          <th class="px-3 py-2">Role</th>
+          <th class="px-3 py-2">Active</th>
+          <th class="px-3 py-2">Department</th>
+          <th class="px-3 py-2 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of current.content; trackBy: trackById" class="border-t text-slate-700">
+          <td class="px-3 py-3 font-medium">{{ user.username }}</td>
+          <td class="px-3 py-3">{{ user.email }}</td>
+          <td class="px-3 py-3">{{ user.role }}</td>
+          <td class="px-3 py-3">{{ user.active ? 'Yes' : 'No' }}</td>
+          <td class="px-3 py-3">{{ user.departmentId ?? '-' }}</td>
+          <td class="px-3 py-3 text-right">
+            <button class="mr-3 text-blue-600 hover:underline" type="button" (click)="openEdit(user)">
+              Edit
+            </button>
+            <button class="text-rose-600 hover:underline" type="button" (click)="openReset(user)">
+              Reset password
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="!current.content.length" class="border-t text-center text-slate-500">
+          <td colspan="6" class="px-3 py-8">No users found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer *ngIf="page() as current" class="flex items-center justify-between text-sm text-slate-600">
+    <div>
+      Showing page {{ current.number + 1 }} of {{ current.totalPages || 1 }}
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        class="rounded border border-slate-300 px-3 py-1 disabled:opacity-40"
+        type="button"
+        [disabled]="current.number === 0"
+        (click)="pageChange(-1)"
+      >
+        Previous
+      </button>
+      <button
+        class="rounded border border-slate-300 px-3 py-1 disabled:opacity-40"
+        type="button"
+        [disabled]="current.number + 1 >= current.totalPages"
+        (click)="pageChange(1)"
+      >
+        Next
+      </button>
+    </div>
+  </footer>
+</section>
+
+<app-user-form-modal
+  [open]="formOpen()"
+  [mode]="formMode()"
+  [user]="editingUser()"
+  [loading]="formLoading()"
+  (saved)="handleFormSaved()"
+  (closed)="handleFormClosed()"
+></app-user-form-modal>
+
+<div *ngIf="confirmResetFor() as target" class="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/50 px-4">
+  <div class="w-full max-w-sm rounded-lg border border-slate-200 bg-white shadow-xl">
+    <header class="border-b border-slate-200 px-4 py-3 text-lg font-semibold text-slate-900">
+      Reset password?
+    </header>
+    <div class="px-4 py-4 text-sm text-slate-700">
+      Reset password for <span class="font-semibold">{{ target.username }}</span>?<br />
+      They will be required to set a new password on next login.
+    </div>
+    <form (ngSubmit)="confirmReset()" class="px-4">
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+        Temporary password
+      </label>
+      <input
+        type="text"
+        class="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+        placeholder="Enter temporary password"
+        [(ngModel)]="resetTempPasswordValue"
+        name="tempPassword"
+        [disabled]="resetProcessing()"
+      />
+      <p *ngIf="resetError()" class="mt-1 text-xs text-red-600">{{ resetError() }}</p>
+      <footer class="flex items-center justify-end gap-2 py-3">
+        <button
+          class="rounded border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
+          type="button"
+          (click)="closeReset()"
+          [disabled]="resetProcessing()"
+        >
+          Cancel
+        </button>
+        <button
+          class="rounded bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-50"
+          type="submit"
+          [disabled]="resetProcessing()"
+        >
+          {{ resetProcessing() ? 'Resetting�' : 'Confirm reset' }}
+        </button>
+      </footer>
+    </form>
+  </div>
+</div>
+

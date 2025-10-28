@@ -6,7 +6,12 @@
         <a routerLink="/tickets" routerLinkActive="text-emerald-600" class="hover:text-emerald-500">
           Tickets
         </a>
-        <a routerLink="/admin/users" routerLinkActive="text-emerald-600" class="hover:text-emerald-500">
+        <a
+          *ngIf="isAdmin()"
+          routerLink="/admin/users"
+          routerLinkActive="text-emerald-600"
+          class="hover:text-emerald-500"
+        >
           Users
         </a>
         <div class="relative">
