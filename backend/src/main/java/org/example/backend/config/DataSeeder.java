@@ -3,9 +3,10 @@ package org.example.backend.config;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.example.backend.domain.department.entity.Department;
 import org.example.backend.domain.ticket.entity.Category;
 import org.example.backend.domain.ticket.repository.CategoryRepository;
-import org.example.backend.domain.user.entity.Department;
 import org.example.backend.domain.user.entity.User;
 import org.example.backend.domain.user.enums.UserRole;
 import org.example.backend.domain.user.repository.DepartmentRepository;

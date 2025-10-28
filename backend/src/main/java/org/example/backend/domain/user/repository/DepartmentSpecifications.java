@@ -1,6 +1,6 @@
 package org.example.backend.domain.user.repository;
 
-import org.example.backend.domain.user.entity.Department;
+import org.example.backend.domain.department.entity.Department;
 import org.springframework.data.jpa.domain.Specification;
 
 public final class DepartmentSpecifications {

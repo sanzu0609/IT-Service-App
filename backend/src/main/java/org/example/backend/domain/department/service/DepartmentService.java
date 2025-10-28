@@ -7,7 +7,7 @@ import org.example.backend.domain.department.dto.DepartmentDto;
 import org.example.backend.domain.department.dto.DepartmentLiteDto;
 import org.example.backend.domain.department.dto.request.CreateDepartmentRequest;
 import org.example.backend.domain.department.dto.request.UpdateDepartmentRequest;
-import org.example.backend.domain.user.entity.Department;
+import org.example.backend.domain.department.entity.Department;
 import org.example.backend.domain.user.repository.DepartmentRepository;
 import org.example.backend.domain.user.repository.DepartmentSpecifications;
 import org.springframework.data.domain.Page;

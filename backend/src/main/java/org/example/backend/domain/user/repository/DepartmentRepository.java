@@ -2,7 +2,8 @@ package org.example.backend.domain.user.repository;
 
 import java.util.List;
 import java.util.Optional;
-import org.example.backend.domain.user.entity.Department;
+
+import org.example.backend.domain.department.entity.Department;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
