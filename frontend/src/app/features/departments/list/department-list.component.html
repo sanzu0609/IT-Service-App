@@ -1,0 +1,179 @@
+<section class="space-y-4">
+  <header
+    class="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+  >
+    <div class="flex flex-col gap-1">
+      <label class="text-xs font-semibold uppercase text-slate-500" for="dept-search">
+        Tìm kiếm
+      </label>
+      <input
+        id="dept-search"
+        class="w-64 rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+        type="search"
+        placeholder="Mã hoặc tên phòng ban"
+        [(ngModel)]="filters.q"
+        (keyup.enter)="applyFilters()"
+      />
+    </div>
+    <div class="flex flex-col gap-1">
+      <label class="text-xs font-semibold uppercase text-slate-500" for="dept-active">
+        Trạng thái
+      </label>
+      <select
+        id="dept-active"
+        class="w-36 rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+        [(ngModel)]="filters.active"
+      >
+        <option value="">Tất cả</option>
+        <option value="true">Đang hoạt động</option>
+        <option value="false">Ngưng hoạt động</option>
+      </select>
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+        (click)="applyFilters()"
+        [disabled]="loading()"
+      >
+        Lọc
+      </button>
+      <button
+        type="button"
+        class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+        (click)="resetFilters()"
+        [disabled]="loading()"
+      >
+        Đặt lại
+      </button>
+    </div>
+    <div class="flex-1"></div>
+    <a
+      class="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+      [routerLink]="['/admin/departments/form/new']"
+    >
+      + Thêm phòng ban
+    </a>
+  </header>
+
+  <div
+    *ngIf="error()"
+    class="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+  >
+    {{ error() }}
+  </div>
+
+  <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <table class="min-w-full divide-y divide-slate-200 text-sm">
+      <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <tr>
+          <th class="px-4 py-3">Mã</th>
+          <th class="px-4 py-3">Tên</th>
+          <th class="px-4 py-3">Trạng thái</th>
+          <th class="px-4 py-3">Ngày tạo</th>
+          <th class="px-4 py-3 text-right">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <tr *ngIf="loading()">
+          <td class="px-4 py-6 text-center text-sm text-slate-500" colspan="5">
+            Đang tải danh sách phòng ban...
+          </td>
+        </tr>
+        <ng-container *ngIf="!loading()">
+          <tr *ngFor="let department of page()?.content ?? []; trackBy: trackById" class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-mono text-sm text-slate-800">{{ department.code }}</td>
+            <td class="px-4 py-3 text-sm text-slate-800">{{ department.name }}</td>
+            <td class="px-4 py-3">
+              <span
+                class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
+                [ngClass]="
+                  department.active
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-slate-200 text-slate-700'
+                "
+              >
+                {{ department.active ? 'Đang hoạt động' : 'Ngưng hoạt động' }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-500">
+              {{ department.createdAt | date: 'short' }}
+            </td>
+            <td class="px-4 py-3 text-right text-sm">
+              <a
+                class="mr-3 font-semibold text-emerald-700 hover:underline"
+                [routerLink]="['/admin/departments/form', department.id]"
+              >
+                Sửa
+              </a>
+              <button
+                type="button"
+                class="font-semibold text-rose-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                (click)="toggleActive(department)"
+                [disabled]="isToggling(department.id) || loading()"
+              >
+                {{ department.active ? 'Vô hiệu' : 'Kích hoạt' }}
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="(page()?.content?.length ?? 0) === 0">
+            <td class="px-4 py-6 text-center text-sm text-slate-500" colspan="5">
+              Không tìm thấy phòng ban nào phù hợp.
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+  <footer
+    *ngIf="page() && (page()?.totalElements ?? 0) > 0"
+    class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm"
+  >
+    <div>
+      Đang hiển thị
+      {{ page()?.content.length ?? 0 }}
+      /
+      {{ page()?.totalElements }}
+      phòng ban.
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="rounded-md border border-slate-300 px-3 py-1 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          (click)="changePage(pageIndex - 1)"
+          [disabled]="pageIndex === 0 || loading()"
+        >
+          Trước
+        </button>
+        <span class="text-sm font-semibold text-slate-700">
+          Trang {{ pageIndex + 1 }} / {{ page()?.totalPages }}
+        </span>
+        <button
+          type="button"
+          class="rounded-md border border-slate-300 px-3 py-1 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          (click)="changePage(pageIndex + 1)"
+          [disabled]="pageIndex + 1 >= (page()?.totalPages ?? 0) || loading()"
+        >
+          Sau
+        </button>
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="text-xs font-semibold uppercase text-slate-500" for="dept-page-size">
+          Kích thước trang
+        </label>
+        <select
+          id="dept-page-size"
+          class="rounded-md border border-slate-300 px-2 py-1 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          [ngModel]="pageSize"
+          (ngModelChange)="changePageSize($event)"
+        >
+          <option *ngFor="let option of pageSizeOptions" [value]="option">
+            {{ option }}
+          </option>
+        </select>
+      </div>
+    </div>
+  </footer>
+</section>
