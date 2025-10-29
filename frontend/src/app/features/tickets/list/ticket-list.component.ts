@@ -1,9 +1,8 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
-  computed,
   inject,
   signal
 } from '@angular/core';
@@ -58,7 +57,6 @@ export class TicketListComponent implements OnInit {
 
   readonly allowCreate = signal(false);
 
-  readonly showMetaColumns = computed(() => !!this.allowCreate());
 
   filterState: { status?: TicketStatus; priority?: Priority } = {};
 
@@ -196,3 +194,5 @@ export class TicketListComponent implements OnInit {
     return 'Unable to load tickets. Please try again later.';
   }
 }
+
+

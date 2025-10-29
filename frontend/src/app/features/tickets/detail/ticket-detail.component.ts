@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -48,6 +48,8 @@ export class TicketDetailComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
 
+  private ticketId: number | null = null;
+
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly ticket = signal<Ticket | null>(null);
@@ -57,7 +59,12 @@ export class TicketDetailComponent implements OnInit {
   readonly commentError = signal<string | null>(null);
   readonly commentSubmitting = signal(false);
 
+  readonly statusSubmitting = signal(false);
+  readonly statusError = signal<string | null>(null);
+  readonly statusMessage = signal<string | null>(null);
+
   private readonly userRole = signal<Role | null>(null);
+
   readonly canViewInternal = computed(() => this.userRole() !== 'END_USER');
   readonly canMarkInternal = computed(() => this.userRole() !== 'END_USER');
   readonly canChangeStatus = computed(() => {
@@ -75,15 +82,19 @@ export class TicketDetailComponent implements OnInit {
     if (!currentTicket || !this.canChangeStatus()) {
       return [] as TicketStatus[];
     }
+
     const candidates = STATUS_TRANSITIONS[currentTicket.status] ?? [];
     const role = this.userRole();
+
     if (role === 'AGENT') {
       return candidates.filter(status => AGENT_ALLOWED.includes(status));
     }
+
     if (role === 'ADMIN') {
       return candidates;
     }
-    return [];
+
+    return [] as TicketStatus[];
   });
 
   readonly commentForm = this.fb.nonNullable.group({
@@ -96,19 +107,17 @@ export class TicketDetailComponent implements OnInit {
     note: ['', [Validators.maxLength(1000)]]
   });
 
-  readonly statusSubmitting = signal(false);
-  readonly statusError = signal<string | null>(null);
-  readonly statusMessage = signal<string | null>(null);
-
   async ngOnInit(): Promise<void> {
     await this.resolveUserRole();
 
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    const idParam = this.route.snapshot.paramMap.get('id');
+    const id = Number(idParam);
     if (Number.isNaN(id)) {
-      this.error.set('Invalid ticket id.');
+      this.error.set('Ticket not found.');
       return;
     }
 
+    this.ticketId = id;
     this.fetchTicket(id);
     this.fetchComments(id);
   }
@@ -123,8 +132,8 @@ export class TicketDetailComponent implements OnInit {
       return;
     }
 
-    const ticketId = this.ticket()?.id;
-    if (!ticketId) {
+    const ticketId = this.ticketId;
+    if (ticketId === null) {
       return;
     }
 
@@ -178,13 +187,18 @@ export class TicketDetailComponent implements OnInit {
       return;
     }
 
-    const ticketId = this.ticket()?.id;
-    if (!ticketId) {
+    const ticketId = this.ticketId;
+    if (ticketId === null) {
       return;
     }
 
     const { toStatus, note } = this.statusForm.getRawValue();
-    const trimmedNote = note?.trim();
+    const allowedStatuses = this.availableStatuses();
+    if (!toStatus || !allowedStatuses.includes(toStatus as TicketStatus)) {
+      this.statusForm.controls.toStatus.setErrors({ invalid: true });
+      this.statusForm.controls.toStatus.markAsTouched();
+      return;
+    }
 
     this.statusSubmitting.set(true);
     this.statusError.set(null);
@@ -193,7 +207,7 @@ export class TicketDetailComponent implements OnInit {
     this.tickets
       .changeStatus(ticketId, {
         toStatus: toStatus as TicketStatus,
-        note: trimmedNote ? trimmedNote : undefined
+        note: note?.trim() ? note.trim() : undefined
       })
       .pipe(finalize(() => this.statusSubmitting.set(false)))
       .subscribe({
@@ -226,29 +240,13 @@ export class TicketDetailComponent implements OnInit {
       } else {
         this.commentForm.controls.isInternal.enable({ emitEvent: false });
       }
-      this.syncStatusForm();
     } catch {
       this.userRole.set(null);
       this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
       this.commentForm.controls.isInternal.disable({ emitEvent: false });
+    } finally {
       this.syncStatusForm();
     }
-  }
-      const me = await this.auth.ensureMe();
-      const role = me?.role ?? null;
-      this.userRole.set(role);
-      if (role === 'END_USER') {
-        this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
-        this.commentForm.controls.isInternal.disable({ emitEvent: false });
-      } else {
-        this.commentForm.controls.isInternal.enable({ emitEvent: false });
-      }
-    } catch {
-      this.userRole.set(null);
-      this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
-      this.commentForm.controls.isInternal.disable({ emitEvent: false });
-    }
-    this.syncStatusForm();
   }
 
   private fetchTicket(id: number): void {
@@ -303,15 +301,18 @@ export class TicketDetailComponent implements OnInit {
 
   private syncStatusForm(): void {
     const options = this.availableStatuses();
-    if (!this.canChangeStatus() || options.length === 0 || !this.ticket()) {
+    const hasTicket = !!this.ticket();
+
+    if (!this.canChangeStatus() || !hasTicket || options.length === 0) {
       this.statusForm.reset({ toStatus: '', note: '' }, { emitEvent: false });
       this.statusForm.disable({ emitEvent: false });
-    } else {
-      this.statusForm.enable({ emitEvent: false });
-      const currentValue = this.statusForm.controls.toStatus.value as TicketStatus | '';
-      if (!currentValue || !options.includes(currentValue as TicketStatus)) {
-        this.statusForm.controls.toStatus.setValue(options[0], { emitEvent: false });
-      }
+      return;
+    }
+
+    this.statusForm.enable({ emitEvent: false });
+    const currentValue = this.statusForm.controls.toStatus.value as TicketStatus | '';
+    if (!currentValue || !options.includes(currentValue as TicketStatus)) {
+      this.statusForm.controls.toStatus.setValue(options[0], { emitEvent: false });
     }
   }
 
@@ -324,6 +325,7 @@ export class TicketDetailComponent implements OnInit {
     ) {
       return 'Ticket not found.';
     }
+
     return this.extractErrorMessage(
       error,
       'Unable to load ticket detail. Please try again later.'
@@ -342,7 +344,7 @@ export class TicketDetailComponent implements OnInit {
         return payload.message;
       }
     }
+
     return fallback;
   }
 }
-

@@ -43,7 +43,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/tickets")
+@RequestMapping("/api/tickets")
 @Validated
 public class TicketController {
 

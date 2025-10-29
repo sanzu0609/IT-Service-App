@@ -1,11 +1,11 @@
-﻿<div class="flex min-h-screen flex-col bg-slate-50 text-slate-900">
+<div class="flex min-h-screen flex-col bg-slate-50 text-slate-900">
   <header class="border-b border-slate-200 bg-white">
     <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3">
       <div class="text-lg font-semibold">ITSM Mini</div>
       <nav class="flex items-center gap-4 text-sm font-medium">
         <a
           *ngIf="canSeeTickets()"
-          routerLink="/tickets"
+          [routerLink]="['/tickets']"
           routerLinkActive="text-emerald-600"
           class="hover:text-emerald-500"
         >
@@ -13,7 +13,7 @@
         </a>
         <a
           *ngIf="canSeeUsers()"
-          routerLink="/admin/users"
+          [routerLink]="['/admin/users']"
           routerLinkActive="text-emerald-600"
           class="hover:text-emerald-500"
         >
@@ -21,7 +21,7 @@
         </a>
         <a
           *ngIf="canSeeDepartments()"
-          routerLink="/admin/departments"
+          [routerLink]="['/admin/departments']"
           routerLinkActive="text-emerald-600"
           class="hover:text-emerald-500"
         >
@@ -84,3 +84,5 @@
   ></app-change-password-modal>
   <app-toast-container></app-toast-container>
 </div>
+
+

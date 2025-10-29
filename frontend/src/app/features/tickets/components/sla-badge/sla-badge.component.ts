@@ -1,6 +1,6 @@
 ﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@angular/core';
-import { SlaFlag } from '../../../core/models/ticket';
+import { SlaFlag } from '../../../../core/models/ticket';
 import { getSlaClass } from '../../utils/ticket-style.util';
 
 @Component({

@@ -1,7 +1,7 @@
 ﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@angular/core';
 import { TicketStatus } from '../../../core/models/ticket';
-import { getStatusClass } from '../../utils/ticket-style.util';
+import { getStatusClass } from '../utils/ticket-style.util';
 
 @Component({
   selector: 'app-ticket-status-chip',
