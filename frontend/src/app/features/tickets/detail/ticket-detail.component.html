@@ -184,6 +184,33 @@
                   placeholder="Add any context for this change"
                   formControlName="note"
                 ></textarea>
+                <p
+                  *ngIf="statusForm.controls.note.touched && statusForm.controls.note.hasError('maxlength')"
+                  class="text-xs text-rose-600"
+                >
+                  Note cannot exceed 500 characters.
+                </p>
+              </div>
+
+              <div class="flex flex-col gap-2" *ngIf="statusForm.controls.holdReason.enabled">
+                <label class="text-xs font-semibold uppercase tracking-wide text-slate-500" for="ticket-hold-reason">
+                  Hold reason
+                </label>
+                <input
+                  id="ticket-hold-reason"
+                  class="rounded border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:bg-slate-100"
+                  placeholder="Explain why this ticket is on hold"
+                  formControlName="holdReason"
+                />
+                <ng-container *ngIf="statusForm.controls.holdReason.touched && statusForm.controls.holdReason.invalid">
+                  <p class="text-xs text-rose-600" *ngIf="statusForm.controls.holdReason.hasError('required')">
+                    Hold reason is required when moving a ticket to On Hold.
+                  </p>
+                  <p class="text-xs text-rose-600" *ngIf="statusForm.controls.holdReason.hasError('maxlength')">
+                    Hold reason cannot exceed 250 characters.
+                  </p>
+                </ng-container>
+                <p class="text-xs text-slate-500">Required when the ticket is transitioned to On Hold.</p>
               </div>
 
               <button

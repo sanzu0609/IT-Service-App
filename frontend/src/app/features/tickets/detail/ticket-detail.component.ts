@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnInit,
   computed,
   inject,
@@ -17,6 +18,7 @@ import { TicketStatusChipComponent } from '../components/ticket-status-chip.comp
 import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/user';
 import { ToastService } from '../../../core/services/toast.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 const STATUS_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   NEW: ['IN_PROGRESS', 'ON_HOLD', 'CANCELLED'],
@@ -49,6 +51,7 @@ export class TicketDetailComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   private ticketId: number | null = null;
 
@@ -125,10 +128,24 @@ export class TicketDetailComponent implements OnInit {
 
   readonly statusForm = this.fb.nonNullable.group({
     toStatus: ['', Validators.required],
-    note: ['', [Validators.maxLength(1000)]]
+    note: ['', [Validators.maxLength(500)]],
+    holdReason: ['']
   });
 
   async ngOnInit(): Promise<void> {
+    this.statusForm.controls.holdReason.disable({ emitEvent: false });
+    this.toggleHoldReasonControl('NEW');
+    this.statusForm.controls.toStatus.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(value => {
+        const status = (value ?? '') as TicketStatus | '';
+        if (!status) {
+          this.toggleHoldReasonControl('NEW');
+          return;
+        }
+        this.toggleHoldReasonControl(status as TicketStatus);
+      });
+
     this.applyCommentPermissions(null);
     await this.resolveUserRole();
 
@@ -209,11 +226,20 @@ export class TicketDetailComponent implements OnInit {
       return;
     }
 
-    const { toStatus, note } = this.statusForm.getRawValue();
+    const { toStatus, note, holdReason } = this.statusForm.getRawValue();
     const allowedStatuses = this.availableStatuses();
     if (!toStatus || !allowedStatuses.includes(toStatus as TicketStatus)) {
       this.statusForm.controls.toStatus.setErrors({ invalid: true });
       this.statusForm.controls.toStatus.markAsTouched();
+      return;
+    }
+
+    const trimmedNote = note?.trim() ?? '';
+    const trimmedHoldReason = holdReason?.trim() ?? '';
+
+    if ((toStatus as TicketStatus) === 'ON_HOLD' && !trimmedHoldReason) {
+      this.statusForm.controls.holdReason.setErrors({ required: true });
+      this.statusForm.controls.holdReason.markAsTouched();
       return;
     }
 
@@ -224,7 +250,8 @@ export class TicketDetailComponent implements OnInit {
     this.tickets
       .changeStatus(ticketId, {
         toStatus: toStatus as TicketStatus,
-        note: note?.trim() ? note.trim() : undefined
+        note: trimmedNote ? trimmedNote : undefined,
+        holdReason: this.shouldSendHoldReason(toStatus as TicketStatus, trimmedHoldReason)
       })
       .pipe(finalize(() => this.statusSubmitting.set(false)))
       .subscribe({
@@ -232,12 +259,14 @@ export class TicketDetailComponent implements OnInit {
           this.ticket.set(updatedTicket);
           this.statusMessage.set('Status updated successfully.');
           this.statusForm.controls.note.setValue('', { emitEvent: false });
+          this.statusForm.controls.holdReason.setValue('', { emitEvent: false });
           this.syncStatusForm();
+          this.toast.success('Status updated successfully.');
         },
         error: err => {
-          this.statusError.set(
-            this.extractErrorMessage(err, 'Unable to update status. Please try again.')
-          );
+          const message = this.extractErrorMessage(err, 'Unable to update status. Please try again.');
+          this.statusError.set(message);
+          this.toast.error(message);
         }
       });
   }
@@ -359,16 +388,48 @@ export class TicketDetailComponent implements OnInit {
     const hasTicket = !!this.ticket();
 
     if (!this.canChangeStatus() || !hasTicket || options.length === 0) {
-      this.statusForm.reset({ toStatus: '', note: '' }, { emitEvent: false });
+      this.statusForm.reset({ toStatus: '', note: '', holdReason: '' }, { emitEvent: false });
+      this.statusForm.controls.holdReason.clearValidators();
+      this.statusForm.controls.holdReason.updateValueAndValidity({ emitEvent: false });
       this.statusForm.disable({ emitEvent: false });
       return;
     }
 
     this.statusForm.enable({ emitEvent: false });
     const currentValue = this.statusForm.controls.toStatus.value as TicketStatus | '';
-    if (!currentValue || !options.includes(currentValue as TicketStatus)) {
-      this.statusForm.controls.toStatus.setValue(options[0], { emitEvent: false });
+    const nextStatus =
+      currentValue && options.includes(currentValue as TicketStatus)
+        ? (currentValue as TicketStatus)
+        : options[0];
+    this.statusForm.controls.toStatus.setValue(nextStatus, { emitEvent: false });
+
+    this.toggleHoldReasonControl(nextStatus);
+  }
+
+  private toggleHoldReasonControl(nextStatus: TicketStatus): void {
+    const requiresHoldReason = nextStatus === 'ON_HOLD';
+    if (!requiresHoldReason) {
+      this.statusForm.controls.holdReason.clearValidators();
+      this.statusForm.controls.holdReason.setValue('', { emitEvent: false });
+      this.statusForm.controls.holdReason.updateValueAndValidity({ emitEvent: false });
+      this.statusForm.controls.holdReason.disable({ emitEvent: false });
+      return;
     }
+
+    this.statusForm.controls.holdReason.enable({ emitEvent: false });
+    this.statusForm.controls.holdReason.setValidators([Validators.required, Validators.maxLength(250)]);
+    this.statusForm.controls.holdReason.updateValueAndValidity({ emitEvent: false });
+    if (!this.statusForm.controls.holdReason.value) {
+      this.statusForm.controls.holdReason.markAsPristine();
+      this.statusForm.controls.holdReason.markAsUntouched();
+    }
+  }
+
+  private shouldSendHoldReason(status: TicketStatus, reason: string): string | undefined {
+    if (status === 'ON_HOLD') {
+      return reason || undefined;
+    }
+    return undefined;
   }
 
   private resolveTicketError(error: unknown): string {
