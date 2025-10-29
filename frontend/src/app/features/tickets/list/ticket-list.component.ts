@@ -55,7 +55,8 @@ export class TicketListComponent implements OnInit {
     page: 0,
     size: 10,
     status: undefined,
-    priority: undefined
+    priority: undefined,
+    search: undefined
   });
 
   readonly allowCreate = signal(false);
@@ -106,6 +107,7 @@ export class TicketListComponent implements OnInit {
     this.filters.set({
       status: this.filterState.status,
       priority: this.filterState.priority,
+      search: this.filterState.search?.trim() || undefined,
       page: 0,
       size: this.filters().size ?? 10
     });
@@ -120,9 +122,11 @@ export class TicketListComponent implements OnInit {
     this.filters.set({
       status: undefined,
       priority: undefined,
+      search: undefined,
       page: 0,
       size: this.filters().size ?? 10
     });
+    this.filterState.search = '';
     this.load();
   }
 
@@ -216,6 +220,7 @@ export class TicketListComponent implements OnInit {
     return {
       status: params.status || undefined,
       priority: params.priority || undefined,
+      search: params.search?.toString().trim() || undefined,
       page: params.page ?? 0,
       size: params.size ?? 10
     };
@@ -225,7 +230,9 @@ export class TicketListComponent implements OnInit {
     const current = this.filters();
     this.filterState = {
       status: current.status as TicketStatus | undefined,
-      priority: current.priority as Priority | undefined,\n      search: current.search\n    };|      priority: current.priority as Priority | undefined,\n      search: current.search\n    };
+      priority: current.priority as Priority | undefined,
+      search: current.search ?? this.filterState.search ?? ''
+    };
   }
 
   private resolveErrorMessage(error: unknown): string {
