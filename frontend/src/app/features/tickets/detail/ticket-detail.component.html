@@ -111,9 +111,14 @@
               placeholder="Share an update..."
               formControlName="content"
             ></textarea>
-            <p *ngIf="commentForm.controls.content.touched && commentForm.controls.content.invalid" class="text-xs text-rose-600">
-              Comment content is required.
-            </p>
+            <ng-container *ngIf="commentForm.controls.content.touched && commentForm.controls.content.invalid">
+              <p class="text-xs text-rose-600" *ngIf="commentForm.controls.content.hasError('required')">
+                Comment content is required.
+              </p>
+              <p class="text-xs text-rose-600" *ngIf="commentForm.controls.content.hasError('maxlength')">
+                Comment cannot exceed 2000 characters.
+              </p>
+            </ng-container>
           </div>
 
           <label *ngIf="canMarkInternal()" class="flex items-center gap-2 text-sm text-slate-700">
@@ -121,12 +126,15 @@
             Internal (only staff can view)
           </label>
           <p *ngIf="!canMarkInternal()" class="text-xs text-slate-500">Comments you add will be visible to staff.</p>
+          <p *ngIf="!canComment()" class="text-xs text-slate-500">
+            Sign in to add comments.
+          </p>
 
           <div class="flex items-center gap-3">
             <button
               type="submit"
               class="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
-              [disabled]="commentSubmitting()"
+              [disabled]="commentSubmitting() || !canComment()"
             >
               {{ commentSubmitting() ? 'Posting...' : 'Post comment' }}
             </button>

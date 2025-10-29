@@ -16,6 +16,7 @@ import { SlaBadgeComponent } from '../components/sla-badge/sla-badge.component';
 import { TicketStatusChipComponent } from '../components/ticket-status-chip.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/user';
+import { ToastService } from '../../../core/services/toast.service';
 
 const STATUS_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   NEW: ['IN_PROGRESS', 'ON_HOLD', 'CANCELLED'],
@@ -47,6 +48,7 @@ export class TicketDetailComponent implements OnInit {
   private readonly tickets = inject(TicketsService);
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly toast = inject(ToastService);
 
   private ticketId: number | null = null;
 
@@ -64,7 +66,9 @@ export class TicketDetailComponent implements OnInit {
   readonly statusMessage = signal<string | null>(null);
 
   private readonly userRole = signal<Role | null>(null);
-  private readonly currentUserId = signal<number | null>(null);| null>(null);
+  private readonly currentUserId = signal<number | null>(null);
+
+  readonly canComment = computed(() => this.userRole() !== null);
 
   readonly canViewInternal = computed(() => this.userRole() !== 'END_USER');
   readonly canMarkInternal = computed(() => this.userRole() !== 'END_USER');
@@ -125,6 +129,7 @@ export class TicketDetailComponent implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
+    this.applyCommentPermissions(null);
     await this.resolveUserRole();
 
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -140,7 +145,7 @@ export class TicketDetailComponent implements OnInit {
   }
 
   submitComment(): void {
-    if (this.commentSubmitting()) {
+    if (this.commentSubmitting() || !this.canComment() || this.commentForm.disabled) {
       return;
     }
 
@@ -177,19 +182,14 @@ export class TicketDetailComponent implements OnInit {
       .subscribe({
         next: comment => {
           this.upsertComment(comment);
-          this.commentForm.reset({
-            content: '',
-            isInternal: payload.isInternal
-          });
-          if (!this.canMarkInternal()) {
-            this.commentForm.controls.isInternal.disable({ emitEvent: false });
-            this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
-          }
+          this.commentError.set(null);
+          this.resetCommentForm(payload.isInternal);
+          this.toast.success('Comment added successfully.');
         },
         error: err => {
-          this.commentError.set(
-            this.extractErrorMessage(err, 'Unable to add comment. Please try again.')
-          );
+          const message = this.extractErrorMessage(err, 'Unable to add comment. Please try again.');
+          this.commentError.set(message);
+          this.toast.error(message);
         }
       });
   }
@@ -252,17 +252,11 @@ export class TicketDetailComponent implements OnInit {
       const role = me?.role ?? null;
       this.userRole.set(role);
       this.currentUserId.set(me?.id ?? null);
-      if (role === 'END_USER') {
-        this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
-        this.commentForm.controls.isInternal.disable({ emitEvent: false });
-      } else {
-        this.commentForm.controls.isInternal.enable({ emitEvent: false });
-      }
+      this.applyCommentPermissions(role);
     } catch {
       this.userRole.set(null);
       this.currentUserId.set(null);
-      this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
-      this.commentForm.controls.isInternal.disable({ emitEvent: false });
+      this.applyCommentPermissions(null);
     } finally {
       this.syncStatusForm();
     }
@@ -298,9 +292,9 @@ export class TicketDetailComponent implements OnInit {
       .subscribe({
         next: comments => this.comments.set(this.sortComments(comments ?? [])),
         error: err => {
-          this.commentError.set(
-            this.extractErrorMessage(err, 'Unable to load comments. Please try again later.')
-          );
+          const message = this.extractErrorMessage(err, 'Unable to load comments. Please try again later.');
+          this.commentError.set(message);
+          this.toast.error(message);
         }
       });
   }
@@ -310,11 +304,53 @@ export class TicketDetailComponent implements OnInit {
     this.comments.set(this.sortComments(updated));
   }
 
+  private resetCommentForm(keepInternal: boolean): void {
+    const allowInternal = this.canMarkInternal();
+    const nextInternal = allowInternal && keepInternal;
+
+    this.commentForm.reset(
+      {
+        content: '',
+        isInternal: nextInternal
+      },
+      { emitEvent: false }
+    );
+
+    if (!allowInternal) {
+      this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
+      this.commentForm.controls.isInternal.disable({ emitEvent: false });
+    } else {
+      this.commentForm.controls.isInternal.enable({ emitEvent: false });
+    }
+
+    this.commentForm.controls.content.markAsPristine();
+    this.commentForm.controls.content.markAsUntouched();
+  }
+
+  private applyCommentPermissions(role: Role | null): void {
+    if (!role) {
+      this.commentForm.disable({ emitEvent: false });
+      this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
+      this.commentForm.controls.content.setValue('', { emitEvent: false });
+      return;
+    }
+
+    this.commentForm.enable({ emitEvent: false });
+    if (role === 'END_USER') {
+      this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
+      this.commentForm.controls.isInternal.disable({ emitEvent: false });
+    } else {
+      this.commentForm.controls.isInternal.enable({ emitEvent: false });
+    }
+
+    this.resetCommentForm(false);
+  }
+
   private sortComments(list: TicketComment[]): TicketComment[] {
     return [...list].sort((a, b) => {
       const aTime = new Date(a.createdAt).getTime();
       const bTime = new Date(b.createdAt).getTime();
-      return aTime - bTime;
+      return bTime - aTime;
     });
   }
 
