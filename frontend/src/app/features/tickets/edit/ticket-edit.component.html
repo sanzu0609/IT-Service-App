@@ -23,7 +23,10 @@
         class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:bg-slate-100"
         formControlName="subject"
       />
-      <p *ngIf="showError('subject')" class="text-xs text-rose-600">Subject is required.</p>
+      <ng-container *ngIf="showError('subject')">
+        <p class="text-xs text-rose-600" *ngIf="form.controls.subject.hasError('required')">Subject is required.</p>
+        <p class="text-xs text-rose-600" *ngIf="form.controls.subject.hasError('minlength')">Subject must be at least 5 characters.</p>
+      </ng-container>
     </div>
 
     <div class="flex flex-col gap-2">
@@ -33,7 +36,10 @@
         class="min-h-[160px] rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:bg-slate-100"
         formControlName="description"
       ></textarea>
-      <p *ngIf="showError('description')" class="text-xs text-rose-600">Description is required.</p>
+      <ng-container *ngIf="showError('description')">
+        <p class="text-xs text-rose-600" *ngIf="form.controls.description.hasError('required')">Description is required.</p>
+        <p class="text-xs text-rose-600" *ngIf="form.controls.description.hasError('minlength')">Description must be at least 10 characters.</p>
+      </ng-container>
     </div>
 
     <div class="grid gap-4 md:grid-cols-3">
@@ -58,6 +64,20 @@
           <option *ngFor="let agent of agents()" [value]="agent.id">{{ agent.fullName || agent.username }}</option>
         </select>
       </div>
+      <div class="flex flex-col gap-2" *ngIf="canEditCategory(); else categoryReadonly">
+        <label class="text-sm font-semibold text-slate-700" for="edit-category">Category</label>
+        <select
+          id="edit-category"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:bg-slate-100"
+          formControlName="categoryId"
+        >
+          <option value="" disabled>Select category</option>
+          <option *ngFor="let category of categories()" [value]="category.id">{{ category.name }}</option>
+        </select>
+        <p *ngIf="categoriesLoading()" class="text-xs text-slate-500">Loading categories...</p>
+        <p *ngIf="categoriesError()" class="text-xs text-rose-600">{{ categoriesError() }}</p>
+        <p *ngIf="showCategoryError()" class="text-xs text-rose-600">Please select a category.</p>
+      </div>
       <div class="flex flex-col gap-2" *ngIf="canEditAsset()">
         <label class="text-sm font-semibold text-slate-700" for="edit-asset">Related asset ID</label>
         <input
@@ -67,12 +87,20 @@
         />
       </div>
     </div>
+    <ng-template #categoryReadonly>
+      <div class="flex flex-col gap-2">
+        <span class="text-sm font-semibold text-slate-700">Category</span>
+        <span class="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+          {{ ticket()?.category?.name ?? 'Unknown' }}
+        </span>
+      </div>
+    </ng-template>
 
     <div class="flex flex-wrap items-center gap-3">
       <button
         type="submit"
         class="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
-        [disabled]="saving()"
+        [disabled]="saving() || !canSave() || (canEditCategory() && (categoriesLoading() || !!categoriesError()))"
       >
         {{ saving() ? 'Saving...' : 'Save changes' }}
       </button>
@@ -86,6 +114,7 @@
         Cancel ticket
       </button>
       <span *ngIf="saving()" class="text-xs text-slate-500">Processing...</span>
+      <p *ngIf="!saving() && !canSave()" class="text-xs text-slate-500">You do not have permission to modify this ticket.</p>
     </div>
   </form>
 </section>
