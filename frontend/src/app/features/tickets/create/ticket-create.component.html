@@ -16,7 +16,10 @@
         placeholder="Short summary"
         formControlName="subject"
       />
-      <p *ngIf="showError('subject')" class="text-xs text-rose-600">Subject is required.</p>
+      <ng-container *ngIf="showError('subject')">
+        <p class="text-xs text-rose-600" *ngIf="form.controls.subject.hasError('required')">Subject is required.</p>
+        <p class="text-xs text-rose-600" *ngIf="form.controls.subject.hasError('minlength')">Subject must be at least 5 characters.</p>
+      </ng-container>
     </div>
 
     <div class="flex flex-col gap-2">
@@ -27,7 +30,10 @@
         placeholder="Provide as much detail as possible"
         formControlName="description"
       ></textarea>
-      <p *ngIf="showError('description')" class="text-xs text-rose-600">Description is required.</p>
+      <ng-container *ngIf="showError('description')">
+        <p class="text-xs text-rose-600" *ngIf="form.controls.description.hasError('required')">Description is required.</p>
+        <p class="text-xs text-rose-600" *ngIf="form.controls.description.hasError('minlength')">Description must be at least 10 characters.</p>
+      </ng-container>
     </div>
 
     <div class="grid gap-4 md:grid-cols-2">
@@ -42,15 +48,18 @@
         </select>
       </div>
       <div class="flex flex-col gap-2">
-        <label class="text-sm font-semibold text-slate-700" for="ticket-category">Category (optional)</label>
+        <label class="text-sm font-semibold text-slate-700" for="ticket-category">Category</label>
         <select
           id="ticket-category"
           class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
           formControlName="categoryId"
         >
-          <option value="">No category</option>
+          <option value="" disabled>Select category</option>
           <option *ngFor="let category of categories()" [value]="category.id">{{ category.name }}</option>
         </select>
+        <p *ngIf="categoriesLoading()" class="text-xs text-slate-500">Loading categories...</p>
+        <p *ngIf="categoriesError()" class="text-xs text-rose-600">{{ categoriesError() }}</p>
+        <p *ngIf="showCategoryError()" class="text-xs text-rose-600">Please select a category.</p>
       </div>
     </div>
 
@@ -72,7 +81,7 @@
       <button
         type="submit"
         class="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
-        [disabled]="loading()"
+        [disabled]="loading() || categoriesLoading() || forbidden()"
       >
         {{ loading() ? 'Creating...' : 'Create ticket' }}
       </button>

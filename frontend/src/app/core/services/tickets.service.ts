@@ -25,7 +25,7 @@ export interface CreateTicketPayload {
   subject: string;
   description: string;
   priority: Priority;
-  categoryId?: number;
+  categoryId: number;
   assigneeId?: number;
   relatedAssetId?: number;
   attachments?: unknown;
