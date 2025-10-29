@@ -1,4 +1,4 @@
-﻿import { Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
 
@@ -23,10 +23,24 @@ export const routes: Routes = [
           )
       },
       {
+        path: 'tickets/create',
+        loadComponent: () =>
+          import('./features/tickets/create/ticket-create.component').then(
+            m => m.TicketCreateComponent
+          )
+      },
+      {
         path: 'tickets/:id',
         loadComponent: () =>
           import('./features/tickets/detail/ticket-detail.component').then(
             m => m.TicketDetailComponent
+          )
+      },
+      {
+        path: 'tickets/:id/edit',
+        loadComponent: () =>
+          import('./features/tickets/edit/ticket-edit.component').then(
+            m => m.TicketEditComponent
           )
       },
       {

@@ -21,6 +21,8 @@ export interface Ticket {
   priority: Priority;
   reporter: User;
   assignee?: User | null;
+  category?: { id: number; name: string } | null;
+  relatedAssetId?: number | null;
   slaResponseDeadline?: string | null;
   slaResolutionDeadline?: string | null;
   slaFlag?: SlaFlag | null;
@@ -37,3 +39,13 @@ export interface TicketComment {
   createdAt: string;
 }
 
+export interface TicketSummary {
+  id: number;
+  ticketNumber: string;
+  subject: string;
+  status: TicketStatus;
+  priority: Priority;
+  slaFlag?: SlaFlag | null;
+  createdAt: string;
+  assigneeId?: number | null;
+}

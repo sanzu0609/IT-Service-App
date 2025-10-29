@@ -10,9 +10,11 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { Page } from '../../../core/models/api';
-import { Priority, Ticket, TicketStatus } from '../../../core/models/ticket';
+import { Priority, TicketStatus, TicketSummary } from '../../../core/models/ticket';
 import { TicketListParams, TicketsService } from '../../../core/services/tickets.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { Role } from '../../../core/models/user';
+import { ToastService } from '../../../core/services/toast.service';
 import { SlaBadgeComponent } from '../components/sla-badge/sla-badge.component';
 import { TicketStatusChipComponent } from '../components/ticket-status-chip.component';
 
@@ -32,6 +34,7 @@ import { TicketStatusChipComponent } from '../components/ticket-status-chip.comp
 export class TicketListComponent implements OnInit {
   private readonly tickets = inject(TicketsService);
   private readonly auth = inject(AuthService);
+  private readonly toast = inject(ToastService);
 
   readonly statuses: TicketStatus[] = [
     'NEW',
@@ -47,7 +50,7 @@ export class TicketListComponent implements OnInit {
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
-  readonly page = signal<Page<Ticket> | null>(null);
+  readonly page = signal<Page<TicketSummary> | null>(null);
   readonly filters = signal<TicketListParams>({
     page: 0,
     size: 10,
@@ -56,9 +59,12 @@ export class TicketListComponent implements OnInit {
   });
 
   readonly allowCreate = signal(false);
+  private readonly userRole = signal<Role | null>(null);
+  private readonly currentUserId = signal<number | null>(null);
+  readonly cancelling = signal<number | null>(null);
 
 
-  filterState: { status?: TicketStatus; priority?: Priority } = {};
+  filterState: { status?: TicketStatus; priority?: Priority; search?: string } = {};
 
   async ngOnInit(): Promise<void> {
     await this.resolvePermissions();
@@ -66,12 +72,31 @@ export class TicketListComponent implements OnInit {
     this.load();
   }
 
-  trackById(_: number, ticket: Ticket): number {
+  trackById(_: number, ticket: TicketSummary): number {
     return ticket.id;
   }
 
   canCreate(): boolean {
     return this.allowCreate();
+  }
+
+  canEdit(ticket: TicketSummary): boolean {
+    const role = this.userRole();
+    if (!role) {
+      return false;
+    }
+    return role === 'ADMIN' || role === 'AGENT';
+  }
+
+  canCancel(ticket: TicketSummary): boolean {
+    const role = this.userRole();
+    if (!role) {
+      return false;
+    }
+    if (ticket.status === 'CANCELLED') {
+      return false;
+    }
+    return role === 'ADMIN' || role === 'AGENT';
   }
 
   applyFilters(): void {
@@ -133,11 +158,36 @@ export class TicketListComponent implements OnInit {
     this.load();
   }
 
+  cancelTicket(ticket: TicketSummary): void {
+    if (!this.canCancel(ticket) || this.cancelling() === ticket.id) {
+      return;
+    }
+    this.cancelling.set(ticket.id);
+    this.tickets
+      .cancel(ticket.id)
+      .pipe(finalize(() => this.cancelling.set(null)))
+      .subscribe({
+        next: () => {
+          this.toast.success('Ticket cancelled.');
+          this.load();
+        },
+        error: err => {
+          const message = this.resolveErrorMessage(err);
+          this.toast.error(message);
+        }
+      });
+  }
+
   private async resolvePermissions(): Promise<void> {
     try {
       const me = await this.auth.ensureMe();
-      this.allowCreate.set(me?.role === 'ADMIN' || me?.role === 'AGENT');
+      this.userRole.set(me?.role ?? null);
+      this.currentUserId.set(me?.id ?? null);
+      const role = me?.role ?? null;
+      this.allowCreate.set(role === 'END_USER' || role === 'ADMIN');
     } catch {
+      this.userRole.set(null);
+      this.currentUserId.set(null);
       this.allowCreate.set(false);
     }
   }
@@ -175,8 +225,7 @@ export class TicketListComponent implements OnInit {
     const current = this.filters();
     this.filterState = {
       status: current.status as TicketStatus | undefined,
-      priority: current.priority as Priority | undefined
-    };
+      priority: current.priority as Priority | undefined,\n      search: current.search\n    };|      priority: current.priority as Priority | undefined,\n      search: current.search\n    };
   }
 
   private resolveErrorMessage(error: unknown): string {
@@ -194,5 +243,6 @@ export class TicketListComponent implements OnInit {
     return 'Unable to load tickets. Please try again later.';
   }
 }
+
 
 

@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -64,6 +64,7 @@ export class TicketDetailComponent implements OnInit {
   readonly statusMessage = signal<string | null>(null);
 
   private readonly userRole = signal<Role | null>(null);
+  private readonly currentUserId = signal<number | null>(null);| null>(null);
 
   readonly canViewInternal = computed(() => this.userRole() !== 'END_USER');
   readonly canMarkInternal = computed(() => this.userRole() !== 'END_USER');
@@ -95,6 +96,22 @@ export class TicketDetailComponent implements OnInit {
     }
 
     return [] as TicketStatus[];
+  });
+
+  readonly canEditTicket = computed(() => {
+    const ticket = this.ticket();
+    const role = this.userRole();
+    const currentUserId = this.currentUserId();
+    if (!ticket || !role) {
+      return false;
+    }
+    if (role === 'ADMIN' || role === 'AGENT') {
+      return true;
+    }
+    if (role === 'END_USER' && currentUserId !== null) {
+      return ticket.reporter?.id === currentUserId && ticket.status === 'NEW';
+    }
+    return false;
   });
 
   readonly commentForm = this.fb.nonNullable.group({
@@ -234,6 +251,7 @@ export class TicketDetailComponent implements OnInit {
       const me = await this.auth.ensureMe();
       const role = me?.role ?? null;
       this.userRole.set(role);
+      this.currentUserId.set(me?.id ?? null);
       if (role === 'END_USER') {
         this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
         this.commentForm.controls.isInternal.disable({ emitEvent: false });
@@ -242,6 +260,7 @@ export class TicketDetailComponent implements OnInit {
       }
     } catch {
       this.userRole.set(null);
+      this.currentUserId.set(null);
       this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
       this.commentForm.controls.isInternal.disable({ emitEvent: false });
     } finally {
@@ -348,3 +367,6 @@ export class TicketDetailComponent implements OnInit {
     return fallback;
   }
 }
+
+
+

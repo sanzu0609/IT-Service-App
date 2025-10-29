@@ -6,7 +6,8 @@ import {
   Priority,
   Ticket,
   TicketComment,
-  TicketStatus
+  TicketStatus,
+  TicketSummary
 } from '../models/ticket';
 
 export interface TicketListParams {
@@ -17,6 +18,7 @@ export interface TicketListParams {
   sort?: string;
   reporterId?: number;
   assigneeId?: number;
+  search?: string;
 }
 
 export interface CreateTicketPayload {
@@ -25,6 +27,7 @@ export interface CreateTicketPayload {
   priority: Priority;
   categoryId?: number;
   assigneeId?: number;
+  relatedAssetId?: number;
   attachments?: unknown;
 }
 
@@ -34,6 +37,7 @@ export interface UpdateTicketPayload {
   priority?: Priority;
   assigneeId?: number | null;
   categoryId?: number | null;
+  relatedAssetId?: number | null;
 }
 
 export interface AddCommentPayload {
@@ -44,6 +48,7 @@ export interface AddCommentPayload {
 export interface ChangeStatusPayload {
   toStatus: TicketStatus;
   note?: string;
+  holdReason?: string;
 }
 
 const BASE_URL = '/api/tickets';
@@ -52,7 +57,7 @@ const BASE_URL = '/api/tickets';
 export class TicketsService {
   constructor(private readonly http: HttpClient) {}
 
-  list(params: TicketListParams): Observable<Page<Ticket>> {
+  list(params: TicketListParams = {}): Observable<Page<TicketSummary>> {
     const filtered: Record<string, string | number | boolean> = {};
     for (const [key, value] of Object.entries(params ?? {})) {
       if (value === undefined || value === null || value === '') {
@@ -61,7 +66,7 @@ export class TicketsService {
       filtered[key] = value as string | number | boolean;
     }
 
-    return this.http.get<Page<Ticket>>(BASE_URL, {
+    return this.http.get<Page<TicketSummary>>(BASE_URL, {
       params: filtered,
       withCredentials: true
     });
@@ -102,4 +107,9 @@ export class TicketsService {
       withCredentials: true
     });
   }
+
+  cancel(id: number, note?: string): Observable<Ticket> {
+    return this.changeStatus(id, { toStatus: 'CANCELLED', note });
+  }
 }
+

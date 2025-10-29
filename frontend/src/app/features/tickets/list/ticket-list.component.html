@@ -14,6 +14,15 @@
         <option *ngFor="let priority of priorities" [ngValue]="priority">{{ priority }}</option>
       </select>
     </div>
+    <div class="flex flex-col gap-1">
+      <label class="text-xs font-semibold uppercase tracking-wide text-slate-500" for="ticket-search">Search</label>
+      <input
+        id="ticket-search"
+        class="w-64 rounded border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+        placeholder="Search subject..."
+        [(ngModel)]="filterState.search"
+      />
+    </div>
     <div class="flex items-center gap-2">
       <button
         type="button"
@@ -72,13 +81,29 @@
             <app-sla-badge [flag]="ticket.slaFlag"></app-sla-badge>
           </td>
           <td class="px-3 py-3 text-slate-500">{{ ticket.createdAt | date: 'short' }}</td>
-          <td class="px-3 py-3 text-right">
+          <td class="px-3 py-3 text-right space-x-3">
             <a
               class="text-emerald-600 hover:underline"
               [routerLink]="['/tickets', ticket.id]"
             >
               View
             </a>
+            <a
+              *ngIf="canEdit(ticket)"
+              class="text-blue-600 hover:underline"
+              [routerLink]="['/tickets', ticket.id, 'edit']"
+            >
+              Edit
+            </a>
+            <button
+              *ngIf="canCancel(ticket)"
+              type="button"
+              class="text-rose-600 hover:underline disabled:opacity-50"
+              (click)="cancelTicket(ticket)"
+              [disabled]="cancelling() === ticket.id"
+            >
+              Cancel
+            </button>
           </td>
         </tr>
         <tr *ngIf="!current.content.length" class="border-t text-center text-slate-500">
