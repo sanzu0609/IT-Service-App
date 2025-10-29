@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, computed, signal } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { finalize } from 'rxjs/operators';
@@ -22,6 +22,9 @@ export class MainLayoutComponent implements OnInit {
   readonly isModalOpen = computed(() => this.showChangePasswordModal());
   readonly showUserMenu = signal(false);
   readonly isAdmin = computed(() => this.user()?.role === 'ADMIN');
+  readonly canSeeTickets = computed(() => !!this.user());
+  readonly canSeeUsers = computed(() => this.user()?.role === 'ADMIN');
+  readonly canSeeDepartments = computed(() => this.user()?.role === 'ADMIN');
 
   constructor(
     private readonly authService: AuthService,

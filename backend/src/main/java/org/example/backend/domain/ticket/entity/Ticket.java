@@ -17,6 +17,7 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.example.backend.domain.ticket.enums.TicketCategory;
 import org.example.backend.domain.ticket.enums.TicketPriority;
 import org.example.backend.domain.ticket.enums.TicketSlaFlag;
 import org.example.backend.domain.ticket.enums.TicketStatus;
@@ -55,9 +56,9 @@ public class Ticket {
     @JoinColumn(name = "assignee_id")
     private User assignee;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = false, length = 32)
+    private TicketCategory category;
 
     @Column(name = "related_asset_id")
     private Long relatedAssetId;
@@ -98,7 +99,7 @@ public class Ticket {
             String subject,
             String description,
             TicketPriority priority,
-            Category category,
+            TicketCategory category,
             User reporter
     ) {
         this.subject = subject;
@@ -189,11 +190,11 @@ public class Ticket {
         this.assignee = assignee;
     }
 
-    public Category getCategory() {
+    public TicketCategory getCategory() {
         return category;
     }
 
-    public void setCategory(Category category) {
+    public void setCategory(TicketCategory category) {
         this.category = category;
     }
 

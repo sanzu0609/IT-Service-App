@@ -2,6 +2,7 @@
 package org.example.backend.domain.ticket.controller;
 
 import jakarta.validation.Valid;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.example.backend.domain.auth.controller.AuthControllerUtils;
@@ -15,6 +16,7 @@ import org.example.backend.domain.ticket.dto.response.TicketSummaryResponse;
 import org.example.backend.domain.ticket.entity.Ticket;
 import org.example.backend.domain.ticket.entity.TicketComment;
 import org.example.backend.domain.ticket.entity.TicketHistory;
+import org.example.backend.domain.ticket.enums.TicketCategory;
 import org.example.backend.domain.ticket.enums.TicketPriority;
 import org.example.backend.domain.ticket.enums.TicketStatus;
 import org.example.backend.domain.ticket.service.CommentService;
@@ -43,7 +45,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/tickets")
+@RequestMapping("/api/tickets")
 @Validated
 public class TicketController {
 
@@ -66,13 +68,16 @@ public class TicketController {
             throw new IllegalStateException("Only end user or admin can create tickets");
         }
 
-        Ticket ticket = ticketService.createTicket(new CreateTicketCommand(
-                request.subject(),
-                request.description(),
-                request.priority(),
-                request.categoryId(),
-                request.relatedAssetId()
-        ), actor);
+        Ticket ticket = ticketService.createTicket(
+                new CreateTicketCommand(
+                        request.subject(),
+                        request.description(),
+                        request.priority(),
+                        request.category(),
+                        request.relatedAssetId()
+                ),
+                actor
+        );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(toSummaryResponse(ticket));
     }
@@ -89,6 +94,14 @@ public class TicketController {
         AuthUserDetails actor = AuthControllerUtils.requirePrincipal(authentication);
         return ticketService.findTickets(new TicketFilterCriteria(status, priority, assigneeId), actor, pageable)
                 .map(this::toSummaryResponse);
+    }
+
+    @GetMapping("/categories")
+    @PreAuthorize("isAuthenticated()")
+    public List<TicketCategoryResponse> listCategories() {
+        return Arrays.stream(TicketCategory.values())
+                .map(category -> new TicketCategoryResponse(category.name(), category.getLabel()))
+                .toList();
     }
 
     @GetMapping("/{id}")
@@ -108,13 +121,17 @@ public class TicketController {
             @Valid @RequestBody UpdateTicketRequest request
     ) {
         AuthUserDetails actor = AuthControllerUtils.requirePrincipal(authentication);
-        Ticket ticket = ticketService.updateTicket(id, new UpdateTicketCommand(
-                request.assigneeId(),
-                request.priority(),
-                request.categoryId(),
-                Boolean.TRUE.equals(request.clearRelatedAsset()),
-                request.relatedAssetId()
-        ), actor);
+        Ticket ticket = ticketService.updateTicket(
+                id,
+                new UpdateTicketCommand(
+                        request.assigneeId(),
+                        request.priority(),
+                        request.category(),
+                        Boolean.TRUE.equals(request.clearRelatedAsset()),
+                        request.relatedAssetId()
+                ),
+                actor
+        );
         List<TicketComment> comments = commentService.findComments(id);
         return toDetailResponse(ticket, comments, actor.getRole());
     }
@@ -177,6 +194,7 @@ public class TicketController {
                 ticket.getSubject(),
                 ticket.getStatus().name(),
                 ticket.getPriority().name(),
+                ticket.getCategory().name(),
                 ticket.getAssignee() != null ? ticket.getAssignee().getId() : null,
                 ticket.getRelatedAssetId(),
                 ticket.getCreatedAt()
@@ -200,7 +218,8 @@ public class TicketController {
                 ticket.getDescription(),
                 ticket.getStatus().name(),
                 ticket.getPriority().name(),
-                ticket.getCategory().getId(),
+                ticket.getCategory().name(),
+                ticket.getCategory().getLabel(),
                 ticket.getReporter().getId(),
                 ticket.getAssignee() != null ? ticket.getAssignee().getId() : null,
                 ticket.getRelatedAssetId(),
@@ -232,5 +251,8 @@ public class TicketController {
                 history.getNote(),
                 history.getCreatedAt()
         );
+    }
+
+    public record TicketCategoryResponse(String code, String label) {
     }
 }

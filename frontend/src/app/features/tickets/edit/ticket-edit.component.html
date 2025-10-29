@@ -1,0 +1,120 @@
+﻿<section class="mx-auto flex w-full max-w-3xl flex-col gap-4">
+  <header class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-slate-900">Edit Ticket</h1>
+      <p class="text-sm text-slate-600">Update details or assignment based on your permissions.</p>
+    </div>
+    <a class="text-sm font-semibold text-emerald-700 hover:underline" [routerLink]="['/tickets', ticketId() ?? '']">Back to detail</a>
+  </header>
+
+  <div *ngIf="loading()" class="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
+    Loading ticket data...
+  </div>
+
+  <div *ngIf="error()" class="rounded-lg border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700 shadow-sm">
+    {{ error() }}
+  </div>
+
+  <form *ngIf="!loading() && ticket()" [formGroup]="form" (ngSubmit)="save()" class="space-y-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-semibold text-slate-700" for="edit-subject">Subject</label>
+      <input
+        id="edit-subject"
+        class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:bg-slate-100"
+        formControlName="subject"
+      />
+      <ng-container *ngIf="showError('subject')">
+        <p class="text-xs text-rose-600" *ngIf="form.controls.subject.hasError('required')">Subject is required.</p>
+        <p class="text-xs text-rose-600" *ngIf="form.controls.subject.hasError('minlength')">Subject must be at least 5 characters.</p>
+      </ng-container>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-semibold text-slate-700" for="edit-description">Description</label>
+      <textarea
+        id="edit-description"
+        class="min-h-[160px] rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:bg-slate-100"
+        formControlName="description"
+      ></textarea>
+      <ng-container *ngIf="showError('description')">
+        <p class="text-xs text-rose-600" *ngIf="form.controls.description.hasError('required')">Description is required.</p>
+        <p class="text-xs text-rose-600" *ngIf="form.controls.description.hasError('minlength')">Description must be at least 10 characters.</p>
+      </ng-container>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-3">
+      <div class="flex flex-col gap-2" *ngIf="canEditPriority()">
+        <label class="text-sm font-semibold text-slate-700" for="edit-priority">Priority</label>
+        <select
+          id="edit-priority"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          formControlName="priority"
+        >
+          <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-2" *ngIf="showAgentSelect()">
+        <label class="text-sm font-semibold text-slate-700" for="edit-assignee">Assignee</label>
+        <select
+          id="edit-assignee"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          formControlName="assigneeId"
+        >
+          <option value="">Unassigned</option>
+          <option *ngFor="let agent of agents()" [value]="agent.id">{{ agent.fullName || agent.username }}</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-2" *ngIf="canEditCategory(); else categoryReadonly">
+        <label class="text-sm font-semibold text-slate-700" for="edit-category">Category</label>
+        <select
+          id="edit-category"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:bg-slate-100"
+          formControlName="categoryId"
+        >
+          <option value="" disabled>Select category</option>
+          <option *ngFor="let category of categories()" [value]="category.id">{{ category.name }}</option>
+        </select>
+        <p *ngIf="categoriesLoading()" class="text-xs text-slate-500">Loading categories...</p>
+        <p *ngIf="categoriesError()" class="text-xs text-rose-600">{{ categoriesError() }}</p>
+        <p *ngIf="showCategoryError()" class="text-xs text-rose-600">Please select a category.</p>
+      </div>
+      <div class="flex flex-col gap-2" *ngIf="canEditAsset()">
+        <label class="text-sm font-semibold text-slate-700" for="edit-asset">Related asset ID</label>
+        <input
+          id="edit-asset"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:bg-slate-100"
+          formControlName="relatedAssetId"
+        />
+      </div>
+    </div>
+    <ng-template #categoryReadonly>
+      <div class="flex flex-col gap-2">
+        <span class="text-sm font-semibold text-slate-700">Category</span>
+        <span class="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+          {{ ticket()?.category?.name ?? 'Unknown' }}
+        </span>
+      </div>
+    </ng-template>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <button
+        type="submit"
+        class="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
+        [disabled]="saving() || !canSave() || (canEditCategory() && (categoriesLoading() || !!categoriesError()))"
+      >
+        {{ saving() ? 'Saving...' : 'Save changes' }}
+      </button>
+      <button
+        type="button"
+        class="inline-flex items-center rounded-md border border-rose-300 px-4 py-2 text-sm font-semibold text-rose-600 shadow-sm hover:bg-rose-50 disabled:opacity-50"
+        (click)="cancelTicket()"
+        *ngIf="canCancel()"
+        [disabled]="saving()"
+      >
+        Cancel ticket
+      </button>
+      <span *ngIf="saving()" class="text-xs text-slate-500">Processing...</span>
+      <p *ngIf="!saving() && !canSave()" class="text-xs text-slate-500">You do not have permission to modify this ticket.</p>
+    </div>
+  </form>
+</section>

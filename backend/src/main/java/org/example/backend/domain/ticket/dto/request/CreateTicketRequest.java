@@ -3,6 +3,7 @@ package org.example.backend.domain.ticket.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.example.backend.domain.ticket.enums.TicketCategory;
 import org.example.backend.domain.ticket.enums.TicketPriority;
 
 public record CreateTicketRequest(
@@ -17,7 +18,7 @@ public record CreateTicketRequest(
         TicketPriority priority,
 
         @NotNull(message = "Category is required")
-        Long categoryId,
+        TicketCategory category,
 
         Long relatedAssetId
 ) {

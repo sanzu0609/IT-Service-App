@@ -6,12 +6,11 @@ import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.List;
 import org.example.backend.domain.auth.service.AuthUserDetails;
-import org.example.backend.domain.ticket.entity.Category;
 import org.example.backend.domain.ticket.entity.Ticket;
+import org.example.backend.domain.ticket.enums.TicketCategory;
 import org.example.backend.domain.ticket.enums.TicketPriority;
 import org.example.backend.domain.ticket.enums.TicketSlaFlag;
 import org.example.backend.domain.ticket.enums.TicketStatus;
-import org.example.backend.domain.ticket.repository.CategoryRepository;
 import org.example.backend.domain.ticket.repository.TicketRepository;
 import org.example.backend.domain.ticket.repository.TicketSpecifications;
 import org.example.backend.domain.user.entity.User;
@@ -37,7 +36,6 @@ public class TicketService {
     );
 
     private final TicketRepository ticketRepository;
-    private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final TicketNumberGenerator ticketNumberGenerator;
     private final WorkflowValidator workflowValidator;
@@ -46,7 +44,6 @@ public class TicketService {
 
     public TicketService(
             TicketRepository ticketRepository,
-            CategoryRepository categoryRepository,
             UserRepository userRepository,
             TicketNumberGenerator ticketNumberGenerator,
             WorkflowValidator workflowValidator,
@@ -54,7 +51,6 @@ public class TicketService {
             SlaService slaService
     ) {
         this.ticketRepository = ticketRepository;
-        this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
         this.ticketNumberGenerator = ticketNumberGenerator;
         this.workflowValidator = workflowValidator;
@@ -69,14 +65,11 @@ public class TicketService {
         User reporter = userRepository.findById(reporterDetails.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Reporter not found"));
 
-        Category category = categoryRepository.findById(command.categoryId())
-                .orElseThrow(() -> new EntityNotFoundException("Category not found"));
-
         Ticket ticket = new Ticket(
                 command.subject().trim(),
                 command.description().trim(),
                 command.priority() != null ? command.priority() : TicketPriority.MEDIUM,
-                category,
+                command.category(),
                 reporter
         );
         ticket.setRelatedAssetId(command.relatedAssetId());
@@ -117,10 +110,8 @@ public class TicketService {
             ticket.setPriority(command.priority());
         }
 
-        if (command.categoryId() != null) {
-            Category category = categoryRepository.findById(command.categoryId())
-                    .orElseThrow(() -> new EntityNotFoundException("Category not found"));
-            ticket.setCategory(category);
+        if (command.category() != null) {
+            ticket.setCategory(command.category());
         }
 
         if (Boolean.TRUE.equals(command.clearRelatedAsset())) {
@@ -218,7 +209,7 @@ public class TicketService {
         if (!StringUtils.hasText(command.description()) || command.description().trim().length() < 10) {
             throw new IllegalArgumentException("Description must be at least 10 characters");
         }
-        if (command.categoryId() == null) {
+        if (command.category() == null) {
             throw new IllegalArgumentException("Category is required");
         }
     }

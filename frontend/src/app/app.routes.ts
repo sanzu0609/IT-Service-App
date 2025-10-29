@@ -17,10 +17,36 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'tickets' },
       {
         path: 'tickets',
-        loadComponent: () =>
-          import('./features/tickets/tickets-placeholder.component').then(
-            m => m.TicketsPlaceholderComponent
-          )
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/tickets/list/ticket-list.component').then(
+                m => m.TicketListComponent
+              )
+          },
+          {
+            path: 'create',
+            loadComponent: () =>
+              import('./features/tickets/create/ticket-create.component').then(
+                m => m.TicketCreateComponent
+              )
+          },
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('./features/tickets/detail/ticket-detail.component').then(
+                m => m.TicketDetailComponent
+              )
+          },
+          {
+            path: ':id/edit',
+            loadComponent: () =>
+              import('./features/tickets/edit/ticket-edit.component').then(
+                m => m.TicketEditComponent
+              )
+          }
+        ]
       },
       {
         path: 'admin/users',

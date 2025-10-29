@@ -1,11 +1,8 @@
 package org.example.backend.config;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import org.example.backend.domain.department.entity.Department;
-import org.example.backend.domain.ticket.entity.Category;
-import org.example.backend.domain.ticket.repository.CategoryRepository;
 import org.example.backend.domain.user.entity.User;
 import org.example.backend.domain.user.enums.UserRole;
 import org.example.backend.domain.user.repository.DepartmentRepository;
@@ -18,18 +15,15 @@ import org.springframework.stereotype.Component;
 public class DataSeeder implements CommandLineRunner {
 
     private final DepartmentRepository departmentRepository;
-    private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataSeeder(
             DepartmentRepository departmentRepository,
-            CategoryRepository categoryRepository,
             UserRepository userRepository,
             PasswordEncoder passwordEncoder
     ) {
         this.departmentRepository = departmentRepository;
-        this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -37,7 +31,6 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
         Map<String, Department> departments = seedDepartments();
-        seedCategories();
         seedUsers(departments);
     }
 
@@ -57,15 +50,6 @@ public class DataSeeder implements CommandLineRunner {
         });
 
         return results;
-    }
-
-    private void seedCategories() {
-        List<String> categories = List.of("Hardware", "Software", "Access");
-
-        for (String name : categories) {
-            categoryRepository.findByName(name)
-                    .orElseGet(() -> categoryRepository.save(new Category(name, null)));
-        }
     }
 
     private void seedUsers(Map<String, Department> departments) {

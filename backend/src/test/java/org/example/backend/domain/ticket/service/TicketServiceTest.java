@@ -12,11 +12,10 @@ import java.util.List;
 import java.util.Optional;
 import org.example.backend.domain.auth.service.AuthUserDetails;
 import org.example.backend.domain.department.entity.Department;
-import org.example.backend.domain.ticket.entity.Category;
 import org.example.backend.domain.ticket.entity.Ticket;
+import org.example.backend.domain.ticket.enums.TicketCategory;
 import org.example.backend.domain.ticket.enums.TicketPriority;
 import org.example.backend.domain.ticket.enums.TicketStatus;
-import org.example.backend.domain.ticket.repository.CategoryRepository;
 import org.example.backend.domain.ticket.repository.TicketRepository;
 import org.example.backend.domain.user.entity.User;
 import org.example.backend.domain.user.enums.UserRole;
@@ -34,9 +33,6 @@ class TicketServiceTest {
 
     @Mock
     private TicketRepository ticketRepository;
-
-    @Mock
-    private CategoryRepository categoryRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -67,11 +63,9 @@ class TicketServiceTest {
 
     @Test
     void createTicket_initializesSla() {
-        CreateTicketCommand command = new CreateTicketCommand("subject", "description long", TicketPriority.HIGH, 1L, null);
+        CreateTicketCommand command = new CreateTicketCommand("subject", "description long", TicketPriority.HIGH, TicketCategory.HARDWARE, null);
         User reporter = user(1L, UserRole.END_USER);
-        Category category = new Category("Hardware", null);
         given(userRepository.findById(1L)).willReturn(Optional.of(reporter));
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
         given(ticketNumberGenerator.nextTicketNumber()).willReturn("ITSM-2025-0001");
         given(ticketRepository.save(any(Ticket.class))).willAnswer(invocation -> invocation.getArgument(0));
 
@@ -123,9 +117,8 @@ class TicketServiceTest {
     }
 
     private Ticket sampleTicket() {
-        Category category = new Category("Hardware", null);
         User reporter = user(2L, UserRole.ADMIN);
-        Ticket ticket = new Ticket("subject", "description long", TicketPriority.HIGH, category, reporter);
+        Ticket ticket = new Ticket("subject", "description long", TicketPriority.HIGH, TicketCategory.HARDWARE, reporter);
         ReflectionTestUtils.setField(ticket, "id", 10L);
         return ticket;
     }
