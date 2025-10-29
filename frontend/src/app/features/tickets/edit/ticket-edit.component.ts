@@ -12,7 +12,7 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { Priority, Ticket } from '../../../core/models/ticket';
+import { Priority, Ticket, TicketCategory } from '../../../core/models/ticket';
 import { TicketsService, UpdateTicketPayload } from '../../../core/services/tickets.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -20,7 +20,7 @@ import { Role, User } from '../../../core/models/user';
 import { UsersService } from '../../../core/services/users.service';
 import {
   TicketCategoriesService,
-  TicketCategory
+  TicketCategoryOption
 } from '../../../core/services/ticket-categories.service';
 
 @Component({
@@ -44,7 +44,7 @@ export class TicketEditComponent implements OnInit, OnDestroy {
 
   readonly priorities: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
   readonly agents = signal<User[]>([]);
-  readonly categories = signal<TicketCategory[]>([]);
+  readonly categories = signal<TicketCategoryOption[]>([]);
 
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -71,7 +71,7 @@ export class TicketEditComponent implements OnInit, OnDestroy {
     description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(4000)]],
     priority: ['MEDIUM' as Priority, Validators.required],
     assigneeId: [''],
-    categoryId: ['', Validators.required],
+    category: ['', Validators.required],
     relatedAssetId: ['']
   });
 
@@ -100,7 +100,7 @@ export class TicketEditComponent implements OnInit, OnDestroy {
   }
 
   showCategoryError(): boolean {
-    const control = this.form.controls.categoryId;
+    const control = this.form.controls.category;
     return control.touched && control.invalid;
   }
 
@@ -167,13 +167,13 @@ export class TicketEditComponent implements OnInit, OnDestroy {
       payload.relatedAssetId = this.normalizeOptionalNumber(raw.relatedAssetId) ?? null;
     }
     if (this.canEditCategory()) {
-      const categoryId = this.normalizeRequiredNumber(raw.categoryId);
-      if (categoryId === undefined) {
-        this.form.controls.categoryId.setErrors({ required: true });
-        this.form.controls.categoryId.markAsTouched();
+      const category = this.normalizeCategory(raw.category);
+      if (!category) {
+        this.form.controls.category.setErrors({ required: true });
+        this.form.controls.category.markAsTouched();
         return;
       }
-      payload.categoryId = categoryId;
+      payload.category = category;
     }
 
     if (Object.keys(payload).length === 0) {
@@ -285,7 +285,7 @@ export class TicketEditComponent implements OnInit, OnDestroy {
       description: ticket.description,
       priority: ticket.priority,
       assigneeId: ticket.assignee?.id != null ? String(ticket.assignee.id) : '',
-      categoryId: ticket.category?.id != null ? String(ticket.category.id) : '',
+      category: ticket.category ?? '',
       relatedAssetId: ticket.relatedAssetId != null ? String(ticket.relatedAssetId) : ''
     });
 
@@ -322,9 +322,9 @@ export class TicketEditComponent implements OnInit, OnDestroy {
       ticket.assignee?.id != null ? String(ticket.assignee.id) : ''
     );
     this.toggleControl(
-      this.form.controls.categoryId,
+      this.form.controls.category,
       canEditCategory,
-      ticket.category?.id != null ? String(ticket.category.id) : ''
+      ticket.category ?? ''
     );
     this.toggleControl(
       this.form.controls.relatedAssetId,
@@ -333,7 +333,7 @@ export class TicketEditComponent implements OnInit, OnDestroy {
     );
 
     if (canEditCategory) {
-      this.ensureCategoriesLoaded(ticket.category?.id ?? null);
+      this.ensureCategoriesLoaded(ticket.category ?? null);
     } else {
       this.categories.set([]);
       this.categoriesLoaded.set(false);
@@ -342,11 +342,22 @@ export class TicketEditComponent implements OnInit, OnDestroy {
     }
   }
 
-  private ensureCategoriesLoaded(selectedCategoryId: number | null): void {
+  private ensureCategoriesLoaded(selectedCategory: TicketCategory | null): void {
     if (this.categoriesLoaded()) {
-      if (selectedCategoryId !== null) {
-        this.form.controls.categoryId.setValue(String(selectedCategoryId), { emitEvent: false });
+      const available = this.categories();
+      if (available.length === 0) {
+        this.form.controls.category.disable({ emitEvent: false });
+        this.form.controls.category.setValue('', { emitEvent: false });
+        return;
       }
+
+      const desired =
+        selectedCategory && available.some(category => category.code === selectedCategory)
+          ? selectedCategory
+          : available[0].code;
+
+      this.form.controls.category.enable({ emitEvent: false });
+      this.form.controls.category.setValue(desired, { emitEvent: false });
       return;
     }
 
@@ -366,30 +377,31 @@ export class TicketEditComponent implements OnInit, OnDestroy {
           if (categories.length === 0) {
             this.categoriesLoaded.set(false);
             this.categoriesError.set('No categories available. Please contact support.');
-            this.form.controls.categoryId.disable({ emitEvent: false });
-            this.form.controls.categoryId.setValue('', { emitEvent: false });
+            this.form.controls.category.disable({ emitEvent: false });
+            this.form.controls.category.setValue('', { emitEvent: false });
             return;
           }
 
           this.categoriesLoaded.set(true);
           this.categoriesError.set(null);
 
-          const desiredId =
-            selectedCategoryId !== null && categories.some(category => category.id === selectedCategoryId)
-              ? selectedCategoryId
-              : categories[0].id;
+          const desired =
+            selectedCategory && categories.some(category => category.code === selectedCategory)
+              ? selectedCategory
+              : categories[0].code;
 
-          this.form.controls.categoryId.enable({ emitEvent: false });
-          this.form.controls.categoryId.setValue(String(desiredId), { emitEvent: false });
+          this.form.controls.category.enable({ emitEvent: false });
+          this.form.controls.category.setValue(desired, { emitEvent: false });
         },
         error: err => {
           const generic = this.extractErrorMessage(err);
           const fallback = 'Unable to load categories. Please try again later.';
           const message = generic === 'Unable to process your request. Please try again later.' ? fallback : generic;
+          this.categories.set([]);
           this.categoriesLoaded.set(false);
           this.categoriesError.set(message);
-          this.form.controls.categoryId.disable({ emitEvent: false });
-          this.form.controls.categoryId.setValue('', { emitEvent: false });
+          this.form.controls.category.disable({ emitEvent: false });
+          this.form.controls.category.setValue('', { emitEvent: false });
           this.toast.error(message);
         }
       });
@@ -426,6 +438,21 @@ export class TicketEditComponent implements OnInit, OnDestroy {
     return 'Unable to process your request. Please try again later.';
   }
 
+  private normalizeCategory(value: unknown): TicketCategory | null {
+    if (typeof value !== 'string') {
+      return null;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const available = this.categories();
+    if (available.length > 0 && !available.some(category => category.code === trimmed)) {
+      return null;
+    }
+    return trimmed as TicketCategory;
+  }
+
   private normalizeOptionalNumber(value: unknown): number | undefined {
     if (value === undefined || value === null) {
       return undefined;
@@ -447,10 +474,5 @@ export class TicketEditComponent implements OnInit, OnDestroy {
     return undefined;
   }
 
-  private normalizeRequiredNumber(value: unknown): number | undefined {
-    const parsed = this.normalizeOptionalNumber(value);
-    return parsed === undefined ? undefined : parsed;
-  }
 }
-
 

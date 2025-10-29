@@ -11,13 +11,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { Priority, Ticket } from '../../../core/models/ticket';
+import { Priority, Ticket, TicketCategory } from '../../../core/models/ticket';
 import { TicketsService } from '../../../core/services/tickets.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
 import {
   TicketCategoriesService,
-  TicketCategory
+  TicketCategoryOption
 } from '../../../core/services/ticket-categories.service';
 
 @Component({
@@ -38,7 +38,7 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
   private readonly subscriptions = new Subscription();
 
   readonly priorities: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
-  readonly categories = signal<TicketCategory[]>([]);
+  readonly categories = signal<TicketCategoryOption[]>([]);
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -50,7 +50,7 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
     subject: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(200)]],
     description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(4000)]],
     priority: ['MEDIUM' as Priority, Validators.required],
-    categoryId: ['', Validators.required],
+    category: ['', Validators.required],
     relatedAssetId: ['']
   });
 
@@ -69,7 +69,7 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
   }
 
   showCategoryError(): boolean {
-    const control = this.form.controls.categoryId;
+    const control = this.form.controls.category;
     return control.touched && control.invalid;
   }
 
@@ -83,10 +83,9 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const { subject, description, priority, categoryId, relatedAssetId } = this.form.getRawValue();
+    const { subject, description, priority, category, relatedAssetId } = this.form.getRawValue();
     const trimmedSubject = subject.trim();
     const trimmedDescription = description.trim();
-    const resolvedCategoryId = this.normalizeRequiredNumber(categoryId);
 
     if (!trimmedSubject) {
       this.form.controls.subject.setValue('');
@@ -102,9 +101,10 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (resolvedCategoryId === undefined) {
-      this.form.controls.categoryId.setErrors({ required: true });
-      this.form.controls.categoryId.markAsTouched();
+    const resolvedCategory = (category ?? '').toString().trim() as TicketCategory | '';
+    if (!resolvedCategory) {
+      this.form.controls.category.setErrors({ required: true });
+      this.form.controls.category.markAsTouched();
       return;
     }
 
@@ -112,7 +112,7 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
       subject: trimmedSubject,
       description: trimmedDescription,
       priority: priority ?? 'MEDIUM',
-      categoryId: resolvedCategoryId,
+      category: resolvedCategory as TicketCategory,
       relatedAssetId: this.normalizeOptionalNumber(relatedAssetId)
     };
 
@@ -161,15 +161,15 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
           this.categories.set(categories);
           if (categories.length === 0) {
             this.categoriesError.set('No categories available. Please contact support.');
-            this.form.controls.categoryId.disable({ emitEvent: false });
-            this.form.controls.categoryId.setValue('', { emitEvent: false });
+            this.form.controls.category.disable({ emitEvent: false });
+            this.form.controls.category.setValue('', { emitEvent: false });
           } else {
             if (!this.forbidden()) {
-              this.form.controls.categoryId.enable({ emitEvent: false });
+              this.form.controls.category.enable({ emitEvent: false });
             }
-            const currentValue = this.form.controls.categoryId.value;
+            const currentValue = this.form.controls.category.value as string | null;
             if (currentValue === '' || currentValue === null) {
-              this.form.controls.categoryId.setValue(String(categories[0].id));
+              this.form.controls.category.setValue(categories[0].code, { emitEvent: false });
             }
             if (this.error() === 'Unable to load categories. Please try again later.') {
               this.error.set(null);
@@ -179,8 +179,8 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
         error: err => {
           const message = this.extractErrorMessage(err, 'Unable to load categories.');
           this.categoriesError.set(message);
-          this.form.controls.categoryId.disable({ emitEvent: false });
-          this.form.controls.categoryId.setValue('', { emitEvent: false });
+          this.form.controls.category.disable({ emitEvent: false });
+          this.form.controls.category.setValue('', { emitEvent: false });
           this.error.set('Unable to load categories. Please try again later.');
           this.toast.error(message);
         }
@@ -228,10 +228,5 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
 
     const parsed = Number(normalized);
     return Number.isNaN(parsed) ? undefined : parsed;
-  }
-
-  private normalizeRequiredNumber(value: unknown): number | undefined {
-    const parsed = this.normalizeOptionalNumber(value);
-    return parsed === undefined ? undefined : parsed;
   }
 }

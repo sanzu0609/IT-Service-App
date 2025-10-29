@@ -5,6 +5,7 @@ import { Page } from '../models/api';
 import {
   Priority,
   Ticket,
+  TicketCategory,
   TicketComment,
   TicketStatus,
   TicketSummary
@@ -25,8 +26,7 @@ export interface CreateTicketPayload {
   subject: string;
   description: string;
   priority: Priority;
-  categoryId: number;
-  assigneeId?: number;
+  category: TicketCategory;
   relatedAssetId?: number;
   attachments?: unknown;
 }
@@ -36,8 +36,9 @@ export interface UpdateTicketPayload {
   description?: string;
   priority?: Priority;
   assigneeId?: number | null;
-  categoryId?: number | null;
+  category?: TicketCategory;
   relatedAssetId?: number | null;
+  clearRelatedAsset?: boolean;
 }
 
 export interface AddCommentPayload {

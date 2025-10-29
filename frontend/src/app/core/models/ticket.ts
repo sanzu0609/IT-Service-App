@@ -12,6 +12,23 @@ export type TicketStatus =
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type SlaFlag = 'OK' | 'NEAR' | 'BREACHED';
 
+export type TicketCategory =
+  | 'HARDWARE'
+  | 'SOFTWARE'
+  | 'NETWORK'
+  | 'SECURITY'
+  | 'ACCESS'
+  | 'SERVICES';
+
+export const TICKET_CATEGORY_LABELS: Record<TicketCategory, string> = {
+  HARDWARE: 'Hardware',
+  SOFTWARE: 'Software',
+  NETWORK: 'Network',
+  SECURITY: 'Security',
+  ACCESS: 'Access',
+  SERVICES: 'Services'
+};
+
 export interface Ticket {
   id: number;
   ticketNumber: string;
@@ -19,9 +36,10 @@ export interface Ticket {
   description: string;
   status: TicketStatus;
   priority: Priority;
-  reporter: User;
+  reporter?: User | null;
   assignee?: User | null;
-  category?: { id: number; name: string } | null;
+  category: TicketCategory;
+  categoryLabel?: string | null;
   relatedAssetId?: number | null;
   slaResponseDeadline?: string | null;
   slaResolutionDeadline?: string | null;
@@ -33,7 +51,7 @@ export interface Ticket {
 export interface TicketComment {
   id: number;
   ticketId: number;
-  author: User;
+  author?: User | null;
   content: string;
   isInternal: boolean;
   createdAt: string;
@@ -45,6 +63,7 @@ export interface TicketSummary {
   subject: string;
   status: TicketStatus;
   priority: Priority;
+  category: TicketCategory;
   slaFlag?: SlaFlag | null;
   createdAt: string;
   assigneeId?: number | null;
