@@ -8,6 +8,7 @@ public record TicketSummaryResponse(
         String subject,
         String status,
         String priority,
+        String category,
         Long assigneeId,
         Long relatedAssetId,
         LocalDateTime createdAt

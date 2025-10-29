@@ -1,18 +1,19 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { TicketCategory } from '../models/ticket';
 
-export interface TicketCategory {
-  id: number;
-  name: string;
+export interface TicketCategoryOption {
+  code: TicketCategory;
+  label: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class TicketCategoriesService {
   constructor(private readonly http: HttpClient) {}
 
-  list(): Observable<TicketCategory[]> {
-    return this.http.get<TicketCategory[]>('/api/tickets/categories', {
+  list(): Observable<TicketCategoryOption[]> {
+    return this.http.get<TicketCategoryOption[]>('/api/tickets/categories', {
       withCredentials: true
     });
   }
