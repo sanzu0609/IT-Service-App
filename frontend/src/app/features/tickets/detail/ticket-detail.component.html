@@ -102,45 +102,53 @@
           </ul>
         </ng-container>
 
-        <form class="mt-6 space-y-3" [formGroup]="commentForm" (ngSubmit)="submitComment()">
-          <div class="flex flex-col gap-2">
-            <label class="text-sm font-semibold text-slate-700" for="ticket-comment">Add a comment</label>
-            <textarea
-              id="ticket-comment"
-              class="min-h-[120px] w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-              placeholder="Share an update..."
-              formControlName="content"
-            ></textarea>
-            <ng-container *ngIf="commentForm.controls.content.touched && commentForm.controls.content.invalid">
-              <p class="text-xs text-rose-600" *ngIf="commentForm.controls.content.hasError('required')">
-                Comment content is required.
-              </p>
-              <p class="text-xs text-rose-600" *ngIf="commentForm.controls.content.hasError('maxlength')">
-                Comment cannot exceed 2000 characters.
-              </p>
-            </ng-container>
-          </div>
+        <ng-container *ngIf="canComment(); else commentSignIn">
+          <form class="mt-6 space-y-3" [formGroup]="commentForm" (ngSubmit)="submitComment()">
+            <div class="flex flex-col gap-2">
+              <label class="text-sm font-semibold text-slate-700" for="ticket-comment">Add a comment</label>
+              <textarea
+                id="ticket-comment"
+                class="min-h-[120px] w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                placeholder="Share an update..."
+                formControlName="content"
+              ></textarea>
+              <ng-container *ngIf="commentForm.controls.content.touched && commentForm.controls.content.invalid">
+                <p class="text-xs text-rose-600" *ngIf="commentForm.controls.content.hasError('required')">
+                  Comment content is required.
+                </p>
+                <p class="text-xs text-rose-600" *ngIf="commentForm.controls.content.hasError('maxlength')">
+                  Comment cannot exceed 2000 characters.
+                </p>
+              </ng-container>
+            </div>
 
-          <label *ngIf="canMarkInternal()" class="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" formControlName="isInternal" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-            Internal (only staff can view)
-          </label>
-          <p *ngIf="!canMarkInternal()" class="text-xs text-slate-500">Comments you add will be visible to staff.</p>
-          <p *ngIf="!canComment()" class="text-xs text-slate-500">
-            Sign in to add comments.
-          </p>
+            <label *ngIf="canMarkInternal()" class="flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                formControlName="isInternal"
+                class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              Internal (only staff can view)
+            </label>
+            <p *ngIf="!canMarkInternal()" class="text-xs text-slate-500">Comments you add will be visible to staff.</p>
 
-          <div class="flex items-center gap-3">
-            <button
-              type="submit"
-              class="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
-              [disabled]="commentSubmitting() || !canComment()"
-            >
-              {{ commentSubmitting() ? 'Posting...' : 'Post comment' }}
-            </button>
-            <span *ngIf="commentSubmitting()" class="text-xs text-slate-500">Submitting comment...</span>
+            <div class="flex items-center gap-3">
+              <button
+                type="submit"
+                class="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
+                [disabled]="commentSubmitting()"
+              >
+                {{ commentSubmitting() ? 'Posting...' : 'Post comment' }}
+              </button>
+              <span *ngIf="commentSubmitting()" class="text-xs text-slate-500">Submitting comment...</span>
+            </div>
+          </form>
+        </ng-container>
+        <ng-template #commentSignIn>
+          <div class="mt-6 rounded border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+            Sign in to add comments to this ticket.
           </div>
-        </form>
+        </ng-template>
       </article>
     </section>
 
