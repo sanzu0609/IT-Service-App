@@ -1,13 +1,18 @@
-<div class="flex min-h-screen flex-col bg-slate-50 text-slate-900">
+﻿<div class="flex min-h-screen flex-col bg-slate-50 text-slate-900">
   <header class="border-b border-slate-200 bg-white">
     <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3">
       <div class="text-lg font-semibold">ITSM Mini</div>
       <nav class="flex items-center gap-4 text-sm font-medium">
-        <a routerLink="/tickets" routerLinkActive="text-emerald-600" class="hover:text-emerald-500">
+        <a
+          *ngIf="canSeeTickets()"
+          routerLink="/tickets"
+          routerLinkActive="text-emerald-600"
+          class="hover:text-emerald-500"
+        >
           Tickets
         </a>
         <a
-          *ngIf="isAdmin()"
+          *ngIf="canSeeUsers()"
           routerLink="/admin/users"
           routerLinkActive="text-emerald-600"
           class="hover:text-emerald-500"
@@ -15,7 +20,7 @@
           Users
         </a>
         <a
-          *ngIf="isAdmin()"
+          *ngIf="canSeeDepartments()"
           routerLink="/admin/departments"
           routerLinkActive="text-emerald-600"
           class="hover:text-emerald-500"

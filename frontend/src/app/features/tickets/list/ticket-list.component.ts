@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  computed,
   inject,
   signal
 } from '@angular/core';
@@ -12,6 +13,7 @@ import { finalize } from 'rxjs/operators';
 import { Page } from '../../../core/models/api';
 import { Priority, Ticket, TicketStatus } from '../../../core/models/ticket';
 import { TicketListParams, TicketsService } from '../../../core/services/tickets.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { SlaBadgeComponent } from '../components/sla-badge/sla-badge.component';
 import { TicketStatusChipComponent } from '../components/ticket-status-chip.component';
 
@@ -30,6 +32,7 @@ import { TicketStatusChipComponent } from '../components/ticket-status-chip.comp
 })
 export class TicketListComponent implements OnInit {
   private readonly tickets = inject(TicketsService);
+  private readonly auth = inject(AuthService);
 
   readonly statuses: TicketStatus[] = [
     'NEW',
@@ -53,15 +56,24 @@ export class TicketListComponent implements OnInit {
     priority: undefined
   });
 
+  readonly allowCreate = signal(false);
+
+  readonly showMetaColumns = computed(() => !!this.allowCreate());
+
   filterState: { status?: TicketStatus; priority?: Priority } = {};
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    await this.resolvePermissions();
     this.syncFilterState();
     this.load();
   }
 
   trackById(_: number, ticket: Ticket): number {
     return ticket.id;
+  }
+
+  canCreate(): boolean {
+    return this.allowCreate();
   }
 
   applyFilters(): void {
@@ -121,6 +133,15 @@ export class TicketListComponent implements OnInit {
       page: 0
     }));
     this.load();
+  }
+
+  private async resolvePermissions(): Promise<void> {
+    try {
+      const me = await this.auth.ensureMe();
+      this.allowCreate.set(me?.role === 'ADMIN' || me?.role === 'AGENT');
+    } catch {
+      this.allowCreate.set(false);
+    }
   }
 
   private load(): void {

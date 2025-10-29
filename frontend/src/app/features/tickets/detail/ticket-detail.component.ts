@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -80,7 +80,10 @@ export class TicketDetailComponent implements OnInit {
     if (role === 'AGENT') {
       return candidates.filter(status => AGENT_ALLOWED.includes(status));
     }
-    return candidates;
+    if (role === 'ADMIN') {
+      return candidates;
+    }
+    return [];
   });
 
   readonly commentForm = this.fb.nonNullable.group({
@@ -223,6 +226,23 @@ export class TicketDetailComponent implements OnInit {
       } else {
         this.commentForm.controls.isInternal.enable({ emitEvent: false });
       }
+      this.syncStatusForm();
+    } catch {
+      this.userRole.set(null);
+      this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
+      this.commentForm.controls.isInternal.disable({ emitEvent: false });
+      this.syncStatusForm();
+    }
+  }
+      const me = await this.auth.ensureMe();
+      const role = me?.role ?? null;
+      this.userRole.set(role);
+      if (role === 'END_USER') {
+        this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
+        this.commentForm.controls.isInternal.disable({ emitEvent: false });
+      } else {
+        this.commentForm.controls.isInternal.enable({ emitEvent: false });
+      }
     } catch {
       this.userRole.set(null);
       this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
@@ -325,3 +345,4 @@ export class TicketDetailComponent implements OnInit {
     return fallback;
   }
 }
+
