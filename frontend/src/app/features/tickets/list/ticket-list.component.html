@@ -1,0 +1,118 @@
+﻿<section class="flex flex-col gap-4">
+  <header class="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="flex flex-col gap-1">
+      <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</label>
+      <select class="w-48 rounded border border-slate-300 px-3 py-2" [(ngModel)]="filterState.status">
+        <option [ngValue]="undefined">All Status</option>
+        <option *ngFor="let status of statuses" [ngValue]="status">{{ status }}</option>
+      </select>
+    </div>
+    <div class="flex flex-col gap-1">
+      <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Priority</label>
+      <select class="w-40 rounded border border-slate-300 px-3 py-2" [(ngModel)]="filterState.priority">
+        <option [ngValue]="undefined">All Priority</option>
+        <option *ngFor="let priority of priorities" [ngValue]="priority">{{ priority }}</option>
+      </select>
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+        (click)="applyFilters()"
+      >
+        Apply
+      </button>
+      <button
+        type="button"
+        class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+        (click)="resetFilters()"
+      >
+        Reset
+      </button>
+    </div>
+  </header>
+
+  <div *ngIf="error()" class="rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
+    {{ error() }}
+  </div>
+
+  <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <div *ngIf="loading()" class="p-6 text-center text-sm text-slate-500">Loading tickets...</div>
+
+    <table *ngIf="page() as current" class="w-full table-fixed border-collapse text-sm">
+      <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <tr>
+          <th class="px-3 py-2">Ticket #</th>
+          <th class="px-3 py-2">Subject</th>
+          <th class="px-3 py-2">Status</th>
+          <th class="px-3 py-2">Priority</th>
+          <th class="px-3 py-2">SLA</th>
+          <th class="px-3 py-2">Created</th>
+          <th class="px-3 py-2 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ticket of current.content; trackBy: trackById" class="border-t text-slate-700">
+          <td class="px-3 py-3 font-mono text-sm font-semibold">{{ ticket.ticketNumber }}</td>
+          <td class="px-3 py-3">{{ ticket.subject }}</td>
+          <td class="px-3 py-3">
+            <app-ticket-status-chip [status]="ticket.status"></app-ticket-status-chip>
+          </td>
+          <td class="px-3 py-3">{{ ticket.priority }}</td>
+          <td class="px-3 py-3">
+            <app-sla-badge [flag]="ticket.slaFlag"></app-sla-badge>
+          </td>
+          <td class="px-3 py-3 text-slate-500">{{ ticket.createdAt | date: 'short' }}</td>
+          <td class="px-3 py-3 text-right">
+            <a
+              class="text-emerald-600 hover:underline"
+              [routerLink]="['/tickets', ticket.id]"
+            >
+              View
+            </a>
+          </td>
+        </tr>
+        <tr *ngIf="!current.content.length" class="border-t text-center text-slate-500">
+          <td colspan="7" class="px-3 py-8">No tickets found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer *ngIf="page() as current" class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+    <div>
+      Showing page {{ current.number + 1 }} of {{ current.totalPages || 1 }}
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="rounded border border-slate-300 px-3 py-1 disabled:opacity-40"
+        [disabled]="current.number === 0"
+        (click)="changePage(-1)"
+      >
+        Previous
+      </button>
+      <button
+        type="button"
+        class="rounded border border-slate-300 px-3 py-1 disabled:opacity-40"
+        [disabled]="current.number + 1 >= current.totalPages"
+        (click)="changePage(1)"
+      >
+        Next
+      </button>
+    </div>
+    <div class="flex items-center gap-2">
+      <label class="text-xs font-semibold uppercase tracking-wide text-slate-500" for="ticket-page-size">
+        Page size
+      </label>
+      <select
+        id="ticket-page-size"
+        class="rounded border border-slate-300 px-2 py-1 text-sm"
+        [ngModel]="filters().size"
+        (ngModelChange)="changePageSize($event)"
+      >
+        <option *ngFor="let option of [10, 20, 50]" [value]="option">{{ option }}</option>
+      </select>
+    </div>
+  </footer>
+</section>
