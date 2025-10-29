@@ -10,12 +10,24 @@ import {
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Ticket, TicketComment } from '../../../core/models/ticket';
+import { Ticket, TicketComment, TicketStatus } from '../../../core/models/ticket';
 import { TicketsService } from '../../../core/services/tickets.service';
 import { SlaBadgeComponent } from '../components/sla-badge/sla-badge.component';
 import { TicketStatusChipComponent } from '../components/ticket-status-chip.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/user';
+
+const STATUS_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
+  NEW: ['IN_PROGRESS', 'ON_HOLD', 'CANCELLED'],
+  IN_PROGRESS: ['RESOLVED', 'ON_HOLD', 'CANCELLED'],
+  RESOLVED: ['CLOSED', 'REOPENED'],
+  CLOSED: ['REOPENED'],
+  ON_HOLD: ['IN_PROGRESS', 'CANCELLED'],
+  REOPENED: ['IN_PROGRESS', 'CANCELLED'],
+  CANCELLED: []
+};
+
+const AGENT_ALLOWED: TicketStatus[] = ['IN_PROGRESS', 'RESOLVED'];
 
 @Component({
   selector: 'app-ticket-detail',
@@ -48,15 +60,42 @@ export class TicketDetailComponent implements OnInit {
   private readonly userRole = signal<Role | null>(null);
   readonly canViewInternal = computed(() => this.userRole() !== 'END_USER');
   readonly canMarkInternal = computed(() => this.userRole() !== 'END_USER');
+  readonly canChangeStatus = computed(() => {
+    const role = this.userRole();
+    return role === 'ADMIN' || role === 'AGENT';
+  });
+
   readonly visibleComments = computed(() => {
     const all = this.comments();
     return this.canViewInternal() ? all : all.filter(comment => !comment.isInternal);
+  });
+
+  readonly availableStatuses = computed(() => {
+    const currentTicket = this.ticket();
+    if (!currentTicket || !this.canChangeStatus()) {
+      return [] as TicketStatus[];
+    }
+    const candidates = STATUS_TRANSITIONS[currentTicket.status] ?? [];
+    const role = this.userRole();
+    if (role === 'AGENT') {
+      return candidates.filter(status => AGENT_ALLOWED.includes(status));
+    }
+    return candidates;
   });
 
   readonly commentForm = this.fb.nonNullable.group({
     content: ['', [Validators.required, Validators.maxLength(2000)]],
     isInternal: [false]
   });
+
+  readonly statusForm = this.fb.nonNullable.group({
+    toStatus: ['', Validators.required],
+    note: ['', [Validators.maxLength(1000)]]
+  });
+
+  readonly statusSubmitting = signal(false);
+  readonly statusError = signal<string | null>(null);
+  readonly statusMessage = signal<string | null>(null);
 
   async ngOnInit(): Promise<void> {
     await this.resolveUserRole();
@@ -126,6 +165,49 @@ export class TicketDetailComponent implements OnInit {
       });
   }
 
+  changeStatus(): void {
+    if (!this.canChangeStatus() || this.statusSubmitting()) {
+      return;
+    }
+
+    if (this.statusForm.invalid) {
+      this.statusForm.markAllAsTouched();
+      return;
+    }
+
+    const ticketId = this.ticket()?.id;
+    if (!ticketId) {
+      return;
+    }
+
+    const { toStatus, note } = this.statusForm.getRawValue();
+    const trimmedNote = note?.trim();
+
+    this.statusSubmitting.set(true);
+    this.statusError.set(null);
+    this.statusMessage.set(null);
+
+    this.tickets
+      .changeStatus(ticketId, {
+        toStatus: toStatus as TicketStatus,
+        note: trimmedNote ? trimmedNote : undefined
+      })
+      .pipe(finalize(() => this.statusSubmitting.set(false)))
+      .subscribe({
+        next: updatedTicket => {
+          this.ticket.set(updatedTicket);
+          this.statusMessage.set('Status updated successfully.');
+          this.statusForm.controls.note.setValue('', { emitEvent: false });
+          this.syncStatusForm();
+        },
+        error: err => {
+          this.statusError.set(
+            this.extractErrorMessage(err, 'Unable to update status. Please try again.')
+          );
+        }
+      });
+  }
+
   trackComment(_index: number, comment: TicketComment): number {
     return comment.id;
   }
@@ -146,6 +228,7 @@ export class TicketDetailComponent implements OnInit {
       this.commentForm.controls.isInternal.setValue(false, { emitEvent: false });
       this.commentForm.controls.isInternal.disable({ emitEvent: false });
     }
+    this.syncStatusForm();
   }
 
   private fetchTicket(id: number): void {
@@ -156,10 +239,14 @@ export class TicketDetailComponent implements OnInit {
       .get(id)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ticket => this.ticket.set(ticket),
+        next: ticket => {
+          this.ticket.set(ticket);
+          this.syncStatusForm();
+        },
         error: err => {
           this.error.set(this.resolveTicketError(err));
           this.ticket.set(null);
+          this.syncStatusForm();
         }
       });
   }
@@ -192,6 +279,20 @@ export class TicketDetailComponent implements OnInit {
       const bTime = new Date(b.createdAt).getTime();
       return aTime - bTime;
     });
+  }
+
+  private syncStatusForm(): void {
+    const options = this.availableStatuses();
+    if (!this.canChangeStatus() || options.length === 0 || !this.ticket()) {
+      this.statusForm.reset({ toStatus: '', note: '' }, { emitEvent: false });
+      this.statusForm.disable({ emitEvent: false });
+    } else {
+      this.statusForm.enable({ emitEvent: false });
+      const currentValue = this.statusForm.controls.toStatus.value as TicketStatus | '';
+      if (!currentValue || !options.includes(currentValue as TicketStatus)) {
+        this.statusForm.controls.toStatus.setValue(options[0], { emitEvent: false });
+      }
+    }
   }
 
   private resolveTicketError(error: unknown): string {
