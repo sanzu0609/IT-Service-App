@@ -1,7 +1,7 @@
 ﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input, computed, signal } from '@angular/core';
 import { SlaFlag } from '../../../../core/models/ticket';
-import { getSlaClass } from '../../utils/ticket-style.util';
+import { getSlaClass, getSlaLabel } from '../../utils/ticket-style.util';
 
 @Component({
   selector: 'app-sla-badge',
@@ -19,5 +19,6 @@ export class SlaBadgeComponent {
   }
 
   readonly classes = computed(() => getSlaClass(this.flagSignal()));
-  readonly label = computed(() => this.flagSignal() ?? 'N/A');
+  readonly valueLabel = computed(() => this.flagSignal() ?? 'N/A');
+  readonly description = computed(() => getSlaLabel(this.flagSignal()));
 }

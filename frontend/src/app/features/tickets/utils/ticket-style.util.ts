@@ -36,3 +36,16 @@ export function getSlaClass(flag?: SlaFlag | null): string {
       return `${base} bg-slate-100 text-slate-500`;
   }
 }
+
+export function getSlaLabel(flag?: SlaFlag | null): string {
+  switch (flag) {
+    case 'OK':
+      return 'SLA on track';
+    case 'NEAR':
+      return 'SLA nearing breach';
+    case 'BREACHED':
+      return 'SLA breached';
+    default:
+      return 'SLA unknown';
+  }
+}

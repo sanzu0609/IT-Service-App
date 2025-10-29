@@ -1,3 +1,11 @@
-﻿<span [ngClass]="classes()">
-  {{ label() }}
+<span
+  [ngClass]="classes()"
+  [attr.title]="description()"
+  [attr.aria-label]="description()"
+>
+  <span
+    class="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-current opacity-70"
+    aria-hidden="true"
+  ></span>
+  {{ valueLabel() }}
 </span>
