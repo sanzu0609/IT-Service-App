@@ -63,3 +63,24 @@ For more information on using the Angular CLI, including detailed command refere
 2. Visit `/admin/users` to verify list, filters, pagination, and role-based guard.
 3. Use the `+ Create` modal to add a user, then log in as that user to confirm password-change enforcement.
 4. Reopen the modal via `Edit` to update role/active flags, and use the reset-password dialog to issue a temporary password.
+
+
+## Tickets Module Smoke Test
+1. Login as END_USER (e.g., `enduser/EndUser@123`).
+   - Navigate to `/tickets` and verify you can view your own tickets.
+   - Confirm the **+ Create** button is hidden.
+2. Open one of your tickets.
+   - Ensure only public comments are visible.
+   - Add a comment and verify it appears without the “Internal” badge.
+   - Confirm the status change panel is hidden.
+3. Login as AGENT (e.g., `agent/Agent@123`).
+   - Visit `/tickets` and verify the **+ Create** button is visible.
+   - Pick a ticket assigned to you and open detail view.
+     - Ensure all comments (including internal) are visible and you can post an internal note.
+     - Use the status panel to move the ticket to `IN_PROGRESS` ? `RESOLVED`.
+4. Login as ADMIN.
+   - Confirm you can see ticket create button, all comments, and full status transitions (e.g., set to `CLOSED`, reopen to `IN_PROGRESS`).
+   - Verify SLA badges render with OK/NEAR/BREACHED colours.
+5. Negative checks.
+   - Attempt to access `/admin/users` as END_USER ? should redirect/deny.
+   - Try switching to an invalid ticket id (`/tickets/99999`) ? user-friendly error appears.
