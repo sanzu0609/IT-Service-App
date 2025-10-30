@@ -136,6 +136,9 @@ export class TicketDetailComponent implements OnInit {
     holdReason: ['']
   });
 
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly POLL_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+
   async ngOnInit(): Promise<void> {
     this.statusForm.controls.holdReason.disable({ emitEvent: false });
     this.toggleHoldReasonControl('NEW');
@@ -163,6 +166,25 @@ export class TicketDetailComponent implements OnInit {
     this.ticketId = id;
     this.fetchTicket(id);
     this.fetchComments(id);
+    // start polling detail (refresh ticket and comments periodically)
+    this.pollTimer = setInterval(() => {
+      try {
+        if (!this.loading() && this.ticketId != null) {
+          // lightweight refresh without toggling the global loading UI
+          this.refreshTicket(this.ticketId);
+          this.fetchComments(this.ticketId);
+        }
+      } catch {
+        // ignore
+      }
+    }, this.POLL_INTERVAL_MS);
+
+    this.destroyRef.onDestroy(() => {
+      if (this.pollTimer) {
+        clearInterval(this.pollTimer);
+        this.pollTimer = null;
+      }
+    });
   }
 
   submitComment(): void {
@@ -313,6 +335,19 @@ export class TicketDetailComponent implements OnInit {
           this.syncStatusForm();
         }
       });
+  }
+
+  // lightweight refresh used by polling: updates ticket signal without toggling loading state
+  private refreshTicket(id: number): void {
+    this.tickets.get(id).subscribe({
+      next: ticket => {
+        this.ticket.set(ticket);
+        this.syncStatusForm();
+      },
+      error: () => {
+        // swallow errors during background refresh
+      }
+    });
   }
 
   private fetchComments(id: number): void {

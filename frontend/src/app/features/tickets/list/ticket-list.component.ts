@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  DestroyRef,
   inject,
   signal
 } from '@angular/core';
@@ -63,6 +64,9 @@ export class TicketListComponent implements OnInit {
   private readonly userRole = signal<Role | null>(null);
   private readonly currentUserId = signal<number | null>(null);
   readonly cancelling = signal<number | null>(null);
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly POLL_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+  private readonly destroyRef = inject(DestroyRef);
 
 
   filterState: { status?: TicketStatus; priority?: Priority; search?: string } = {};
@@ -71,6 +75,23 @@ export class TicketListComponent implements OnInit {
     await this.resolvePermissions();
     this.syncFilterState();
     this.load();
+    // start polling to refresh ticket list (SLA updates)
+    this.pollTimer = setInterval(() => {
+      try {
+        if (!this.loading()) {
+          this.load();
+        }
+      } catch {
+        // ignore polling errors
+      }
+    }, this.POLL_INTERVAL_MS);
+
+    this.destroyRef.onDestroy(() => {
+      if (this.pollTimer) {
+        clearInterval(this.pollTimer);
+        this.pollTimer = null;
+      }
+    });
   }
 
   trackById(_: number, ticket: TicketSummary): number {
