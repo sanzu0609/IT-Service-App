@@ -98,12 +98,14 @@
       </button>
       <button
         type="button"
-        class="inline-flex items-center rounded-md border border-rose-300 px-4 py-2 text-sm font-semibold text-rose-600 shadow-sm hover:bg-rose-50 disabled:opacity-50"
+        class="inline-flex items-center rounded-md border border-rose-300 px-3 py-2 text-sm font-semibold text-rose-600 shadow-sm hover:bg-rose-50 disabled:opacity-50"
         (click)="cancelTicket()"
         *ngIf="canCancel()"
         [disabled]="saving()"
+        title="Cancel ticket"
+        aria-label="Cancel ticket"
       >
-        Cancel ticket
+        <i class="fa-solid fa-ban"></i>
       </button>
       <span *ngIf="saving()" class="text-xs text-slate-500">Processing...</span>
       <p *ngIf="!saving() && !canSave()" class="text-xs text-slate-500">You do not have permission to modify this ticket.</p>
