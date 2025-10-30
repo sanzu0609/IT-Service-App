@@ -43,8 +43,30 @@
             </dd>
           </div>
           <div>
+            <dt class="font-semibold text-slate-500">Response deadline</dt>
+            <dd class="mt-1 text-slate-800">
+              {{ current.slaResponseDeadline | dateUtc }}
+              <app-countdown
+                *ngIf="current.slaResponseDeadline"
+                [target]="current.slaResponseDeadline"
+              ></app-countdown>
+            </dd>
+          </div>
+          <div>
+            <dt class="font-semibold text-slate-500">Resolution deadline</dt>
+            <dd class="mt-1 text-slate-800">
+              {{ current.slaResolutionDeadline | dateUtc }}
+              <app-countdown
+                *ngIf="current.slaResolutionDeadline"
+                [target]="current.slaResolutionDeadline"
+              ></app-countdown>
+            </dd>
+          </div>
+          <div>
             <dt class="font-semibold text-slate-500">Reporter</dt>
-            <dd class="mt-1 text-slate-800">{{ current.reporter.fullName || current.reporter.username }}</dd>
+            <dd class="mt-1 text-slate-800">
+              {{ current.reporter?.fullName || current.reporter?.username || 'Unknown reporter' }}
+            </dd>
           </div>
           <div>
             <dt class="font-semibold text-slate-500">Assignee</dt>
@@ -88,7 +110,7 @@
             <li *ngFor="let comment of comments; trackBy: trackComment" class="rounded-md border border-slate-200 bg-slate-50 px-4 py-3">
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <span class="text-sm font-semibold text-slate-800">
-                  {{ comment.author.fullName || comment.author.username }}
+                  {{ comment.authorName || 'Unknown user' }}
                 </span>
                 <span class="text-xs text-slate-500">{{ comment.createdAt | date: 'short' }}</span>
               </div>

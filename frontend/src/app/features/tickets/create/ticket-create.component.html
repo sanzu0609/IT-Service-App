@@ -1,4 +1,4 @@
-﻿<section class="mx-auto flex w-full max-w-3xl flex-col gap-4">
+<section class="mx-auto flex w-full max-w-3xl flex-col gap-4">
   <header class="flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-semibold text-slate-900">Create Ticket</h1>
@@ -52,25 +52,15 @@
         <select
           id="ticket-category"
           class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-          formControlName="categoryId"
+          formControlName="category"
         >
           <option value="" disabled>Select category</option>
-          <option *ngFor="let category of categories()" [value]="category.id">{{ category.name }}</option>
+          <option *ngFor="let category of categories()" [value]="category.code">{{ category.label }}</option>
         </select>
         <p *ngIf="categoriesLoading()" class="text-xs text-slate-500">Loading categories...</p>
         <p *ngIf="categoriesError()" class="text-xs text-rose-600">{{ categoriesError() }}</p>
         <p *ngIf="showCategoryError()" class="text-xs text-rose-600">Please select a category.</p>
       </div>
-    </div>
-
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-semibold text-slate-700" for="ticket-asset">Related asset ID (optional)</label>
-      <input
-        id="ticket-asset"
-        class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-        placeholder="e.g., 1234"
-        formControlName="relatedAssetId"
-      />
     </div>
 
     <div *ngIf="error()" class="rounded border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -89,3 +79,4 @@
     </div>
   </form>
 </section>
+

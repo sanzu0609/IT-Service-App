@@ -18,8 +18,6 @@ public record CreateTicketRequest(
         TicketPriority priority,
 
         @NotNull(message = "Category is required")
-        TicketCategory category,
-
-        Long relatedAssetId
+        TicketCategory category
 ) {
 }

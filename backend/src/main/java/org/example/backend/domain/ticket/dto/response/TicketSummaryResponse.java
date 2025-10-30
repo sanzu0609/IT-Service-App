@@ -10,7 +10,9 @@ public record TicketSummaryResponse(
         String priority,
         String category,
         Long assigneeId,
-        Long relatedAssetId,
+        String assigneeFullName,
+        String assigneeUsername,
         LocalDateTime createdAt
 ) {
 }
+

@@ -72,7 +72,6 @@ public class TicketService {
                 command.category(),
                 reporter
         );
-        ticket.setRelatedAssetId(command.relatedAssetId());
         ticket.setTicketNumber(ticketNumberGenerator.nextTicketNumber());
         slaService.initializeSla(ticket, LocalDateTime.now());
 
@@ -112,12 +111,6 @@ public class TicketService {
 
         if (command.category() != null) {
             ticket.setCategory(command.category());
-        }
-
-        if (Boolean.TRUE.equals(command.clearRelatedAsset())) {
-            ticket.setRelatedAssetId(null);
-        } else if (command.relatedAssetId() != null) {
-            ticket.setRelatedAssetId(command.relatedAssetId());
         }
 
         if (command.assigneeId() != null) {

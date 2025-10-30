@@ -63,7 +63,7 @@ class TicketServiceTest {
 
     @Test
     void createTicket_initializesSla() {
-        CreateTicketCommand command = new CreateTicketCommand("subject", "description long", TicketPriority.HIGH, TicketCategory.HARDWARE, null);
+        CreateTicketCommand command = new CreateTicketCommand("subject", "description long", TicketPriority.HIGH, TicketCategory.HARDWARE);
         User reporter = user(1L, UserRole.END_USER);
         given(userRepository.findById(1L)).willReturn(Optional.of(reporter));
         given(ticketNumberGenerator.nextTicketNumber()).willReturn("ITSM-2025-0001");
@@ -82,7 +82,7 @@ class TicketServiceTest {
         given(ticketRepository.findById(10L)).willReturn(Optional.of(ticket));
         given(ticketRepository.save(ticket)).willReturn(ticket);
 
-        ticketService.updateTicket(10L, new UpdateTicketCommand(null, TicketPriority.CRITICAL, null, false, null), admin);
+        ticketService.updateTicket(10L, new UpdateTicketCommand(null, TicketPriority.CRITICAL, null), admin);
 
         verify(slaService).applyDeadlines(eq(ticket), any(LocalDateTime.class));
         verify(slaService).evaluateFlag(eq(ticket), any(LocalDateTime.class));
