@@ -20,7 +20,7 @@ import { Role } from '../../../core/models/user';
 import { ToastService } from '../../../core/services/toast.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DateUtcPipe } from '../../../shared/pipes/date-utc.pipe';
-import { RelativeTimePipe } from '../../../shared/pipes/relative-time.pipe';
+import { CountdownComponent } from '../../../shared/components/countdown/countdown.component';
 
 const STATUS_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   NEW: ['IN_PROGRESS', 'ON_HOLD', 'CANCELLED'],
@@ -44,7 +44,7 @@ const AGENT_ALLOWED: TicketStatus[] = ['IN_PROGRESS', 'RESOLVED'];
     SlaBadgeComponent,
     TicketStatusChipComponent,
     DateUtcPipe,
-    RelativeTimePipe
+    CountdownComponent
   ],
   templateUrl: './ticket-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush

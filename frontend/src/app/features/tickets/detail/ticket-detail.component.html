@@ -46,24 +46,20 @@
             <dt class="font-semibold text-slate-500">Response deadline</dt>
             <dd class="mt-1 text-slate-800">
               {{ current.slaResponseDeadline | dateUtc }}
-              <span
+              <app-countdown
                 *ngIf="current.slaResponseDeadline"
-                class="block text-xs text-slate-500"
-              >
-                {{ current.slaResponseDeadline | relativeTime }}
-              </span>
+                [target]="current.slaResponseDeadline"
+              ></app-countdown>
             </dd>
           </div>
           <div>
             <dt class="font-semibold text-slate-500">Resolution deadline</dt>
             <dd class="mt-1 text-slate-800">
               {{ current.slaResolutionDeadline | dateUtc }}
-              <span
+              <app-countdown
                 *ngIf="current.slaResolutionDeadline"
-                class="block text-xs text-slate-500"
-              >
-                {{ current.slaResolutionDeadline | relativeTime }}
-              </span>
+                [target]="current.slaResolutionDeadline"
+              ></app-countdown>
             </dd>
           </div>
           <div>
