@@ -43,6 +43,30 @@
             </dd>
           </div>
           <div>
+            <dt class="font-semibold text-slate-500">Response deadline</dt>
+            <dd class="mt-1 text-slate-800">
+              {{ current.slaResponseDeadline | dateUtc }}
+              <span
+                *ngIf="current.slaResponseDeadline"
+                class="block text-xs text-slate-500"
+              >
+                {{ current.slaResponseDeadline | relativeTime }}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt class="font-semibold text-slate-500">Resolution deadline</dt>
+            <dd class="mt-1 text-slate-800">
+              {{ current.slaResolutionDeadline | dateUtc }}
+              <span
+                *ngIf="current.slaResolutionDeadline"
+                class="block text-xs text-slate-500"
+              >
+                {{ current.slaResolutionDeadline | relativeTime }}
+              </span>
+            </dd>
+          </div>
+          <div>
             <dt class="font-semibold text-slate-500">Reporter</dt>
             <dd class="mt-1 text-slate-800">
               {{ current.reporter?.fullName || current.reporter?.username || 'Unknown reporter' }}
