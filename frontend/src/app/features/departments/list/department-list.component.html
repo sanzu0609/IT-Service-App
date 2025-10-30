@@ -20,28 +20,34 @@
 
     <div class="flex items-center gap-2">
       <button
-        class="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+        class="rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
         type="button"
         (click)="applyFilters()"
+        title="Apply filters"
+        aria-label="Apply filters"
       >
-        Apply
+        <i class="fa-solid fa-filter"></i>
       </button>
       <button
-        class="rounded border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
+        class="rounded border border-slate-300 px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
         type="button"
         (click)="resetFilters()"
+        title="Reset filters"
+        aria-label="Reset filters"
       >
-        Reset
+        <i class="fa-solid fa-rotate-left"></i>
       </button>
     </div>
 
     <div class="ml-auto">
       <button
-        class="inline-flex items-center rounded border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+        class="inline-flex items-center rounded border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
         type="button"
         (click)="openCreate()"
+        title="Create department"
+        aria-label="Create department"
       >
-        + Create
+        <i class="fa-solid fa-plus"></i>
       </button>
     </div>
   </header>
@@ -81,8 +87,8 @@
           </td>
           <td class="px-3 py-3 text-slate-500">{{ department.createdAt | date: 'short' }}</td>
           <td class="px-3 py-3 text-right">
-            <button class="mr-3 text-blue-600 hover:underline" type="button" (click)="openEdit(department)">
-              Edit
+            <button class="mr-3 text-blue-600 px-2" type="button" (click)="openEdit(department)" title="Edit department" aria-label="Edit department">
+              <i class="fa-solid fa-pen"></i>
             </button>
             <button
               class="text-rose-600 hover:underline"

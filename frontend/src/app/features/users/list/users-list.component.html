@@ -28,28 +28,34 @@
 
     <div class="flex items-center gap-2">
       <button
-        class="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+        class="rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
         type="button"
         (click)="load()"
+        title="Apply filters"
+        aria-label="Apply filters"
       >
-        Apply
+        <i class="fa-solid fa-filter"></i>
       </button>
       <button
-        class="rounded border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
+        class="rounded border border-slate-300 px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
         type="button"
         (click)="resetFilters()"
+        title="Reset filters"
+        aria-label="Reset filters"
       >
-        Reset
+        <i class="fa-solid fa-rotate-left"></i>
       </button>
     </div>
 
     <div class="ml-auto">
       <button
-        class="inline-flex items-center rounded border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+        class="inline-flex items-center rounded border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
         type="button"
         (click)="openCreate()"
+        title="Create user"
+        aria-label="Create user"
       >
-        + Create
+        <i class="fa-solid fa-user-plus"></i>
       </button>
     </div>
   </header>
@@ -81,11 +87,11 @@
           <td class="px-3 py-3">{{ user.active ? 'Yes' : 'No' }}</td>
           <td class="px-3 py-3">{{ user.departmentId ?? '-' }}</td>
           <td class="px-3 py-3 text-right">
-            <button class="mr-3 text-blue-600 hover:underline" type="button" (click)="openEdit(user)">
-              Edit
+            <button class="mr-3 text-blue-600 px-2" type="button" (click)="openEdit(user)" title="Edit user" aria-label="Edit user">
+              <i class="fa-solid fa-pen"></i>
             </button>
-            <button class="text-rose-600 hover:underline" type="button" (click)="openReset(user)">
-              Reset password
+            <button class="text-rose-600 px-2" type="button" (click)="openReset(user)" title="Reset password" aria-label="Reset password">
+              <i class="fa-solid fa-key"></i>
             </button>
           </td>
         </tr>
@@ -154,19 +160,23 @@
       <p *ngIf="resetError()" class="mt-1 text-xs text-red-600">{{ resetError() }}</p>
       <footer class="flex items-center justify-end gap-2 py-3">
         <button
-          class="rounded border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
+          class="rounded border border-slate-300 px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
           type="button"
           (click)="closeReset()"
           [disabled]="resetProcessing()"
+          title="Cancel"
+          aria-label="Cancel"
         >
-          Cancel
+          <i class="fa-solid fa-times"></i>
         </button>
         <button
-          class="rounded bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-50"
+          class="rounded bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-50"
           type="submit"
           [disabled]="resetProcessing()"
+          title="Confirm reset"
+          aria-label="Confirm reset"
         >
-          {{ resetProcessing() ? 'Resetting�' : 'Confirm reset' }}
+          <i class="fa-solid fa-check"></i>
         </button>
       </footer>
     </form>

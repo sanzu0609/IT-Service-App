@@ -70,10 +70,12 @@
     <div class="flex items-center gap-3">
       <button
         type="submit"
-        class="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
+        class="inline-flex items-center rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
         [disabled]="loading() || categoriesLoading() || forbidden()"
+        title="Create ticket"
+        aria-label="Create ticket"
       >
-        {{ loading() ? 'Creating...' : 'Create ticket' }}
+        <i class="fa-solid fa-plus"></i>
       </button>
       <span *ngIf="loading()" class="text-xs text-slate-500">Submitting...</span>
     </div>

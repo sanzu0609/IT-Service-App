@@ -23,10 +23,12 @@
             <app-ticket-status-chip [status]="current.status"></app-ticket-status-chip>
             <a
               *ngIf="canEditTicket()"
-              class="text-xs font-semibold text-emerald-700 hover:underline"
+              class="text-xs font-semibold text-emerald-700 px-2"
               [routerLink]="['/tickets', current.id, 'edit']"
+              title="Edit ticket"
+              aria-label="Edit ticket"
             >
-              Edit ticket
+              <i class="fa-solid fa-pen"></i>
             </a>
           </div>
         </div>
@@ -157,10 +159,12 @@
             <div class="flex items-center gap-3">
               <button
                 type="submit"
-                class="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
+                class="inline-flex items-center rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
                 [disabled]="commentSubmitting()"
+                title="Post comment"
+                aria-label="Post comment"
               >
-                {{ commentSubmitting() ? 'Posting...' : 'Post comment' }}
+                <i class="fa-solid fa-paper-plane"></i>
               </button>
               <span *ngIf="commentSubmitting()" class="text-xs text-slate-500">Submitting comment...</span>
             </div>

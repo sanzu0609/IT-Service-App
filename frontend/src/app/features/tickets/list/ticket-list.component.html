@@ -26,26 +26,32 @@
     <div class="flex items-center gap-2">
       <button
         type="button"
-        class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+        class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
         (click)="applyFilters()"
+        title="Apply filters"
+        aria-label="Apply filters"
       >
-        Apply
+        <i class="fa-solid fa-filter"></i>
       </button>
       <button
         type="button"
-        class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+        class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
         (click)="resetFilters()"
+        title="Reset filters"
+        aria-label="Reset filters"
       >
-        Reset
+        <i class="fa-solid fa-rotate-left"></i>
       </button>
     </div>
     <div class="ml-auto">
       <a
         *ngIf="canCreate()"
-        class="inline-flex items-center rounded border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+        class="inline-flex items-center rounded border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
         [routerLink]="['/tickets/create']"
+        title="Create ticket"
+        aria-label="Create ticket"
       >
-        + Create
+        <i class="fa-solid fa-plus"></i>
       </a>
     </div>
   </header>
@@ -83,26 +89,32 @@
           <td class="px-3 py-3 text-slate-500">{{ ticket.createdAt | date: 'short' }}</td>
           <td class="px-3 py-3 text-right space-x-3">
             <a
-              class="text-emerald-600 hover:underline"
+              class="text-emerald-600 px-2"
               [routerLink]="['/tickets', ticket.id]"
+              title="View ticket"
+              aria-label="View ticket"
             >
-              View
+              <i class="fa-solid fa-eye"></i>
             </a>
             <a
               *ngIf="canEdit(ticket)"
-              class="text-blue-600 hover:underline"
+              class="text-blue-600 px-2"
               [routerLink]="['/tickets', ticket.id, 'edit']"
+              title="Edit ticket"
+              aria-label="Edit ticket"
             >
-              Edit
+              <i class="fa-solid fa-pen"></i>
             </a>
             <button
               *ngIf="canCancel(ticket)"
               type="button"
-              class="text-rose-600 hover:underline disabled:opacity-50"
+              class="text-rose-600 px-2"
               (click)="cancelTicket(ticket)"
               [disabled]="cancelling() === ticket.id"
+              title="Cancel ticket"
+              aria-label="Cancel ticket"
             >
-              Cancel
+              <i class="fa-solid fa-ban"></i>
             </button>
           </td>
         </tr>

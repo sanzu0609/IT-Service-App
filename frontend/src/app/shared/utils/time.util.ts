@@ -6,8 +6,38 @@ export function toDate(value: string | Date | null | undefined): Date | null {
   if (!value) {
     return null;
   }
-  const date = typeof value === 'string' ? new Date(value) : value;
-  return Number.isNaN(date.getTime()) ? null : date;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  const s = value as string;
+  // If string contains timezone offset or Z, rely on built-in parser which understands offsets
+  if (/[zZ]|[+-]\d{2}(:?\d{2})?$/.test(s)) {
+    const d = new Date(s);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  // Parse ISO local datetime (e.g. 2025-10-30T12:34:56 or with millis) as local time
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/);
+  if (!m) {
+    // fallback to Date parser
+    const fallback = new Date(s);
+    return Number.isNaN(fallback.getTime()) ? null : fallback;
+  }
+
+  const [, yy, mm, dd, hh, min, sec = '0', ms = '0'] = m;
+  const parsed = new Date(
+    Number(yy),
+    Number(mm) - 1,
+    Number(dd),
+    Number(hh),
+    Number(min),
+    Number(sec),
+    Number(ms.padEnd(3, '0'))
+  );
+
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 export function formatRelativeTime(value: string | Date | null | undefined): string {
