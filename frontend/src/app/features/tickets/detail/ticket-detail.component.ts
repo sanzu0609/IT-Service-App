@@ -13,7 +13,7 @@ import { finalize } from 'rxjs/operators';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Ticket, TicketComment, TicketStatus } from '../../../core/models/ticket';
 import { TicketsService } from '../../../core/services/tickets.service';
-import { SlaBadgeComponent } from '../components/sla-badge/sla-badge.component';
+import { SlaBadgeComponent } from '../../../shared/components/sla-badge/sla-badge.component';
 import { TicketStatusChipComponent } from '../components/ticket-status-chip.component';
 import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/user';
