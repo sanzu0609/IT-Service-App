@@ -234,9 +234,16 @@ public class TicketController {
     }
 
     private TicketDetailResponse.CommentResponse toCommentResponse(TicketComment comment) {
+        String authorLabel = null;
+        if (comment.getAuthor() != null) {
+            String fullName = comment.getAuthor().getFullName();
+            String username = comment.getAuthor().getUsername();
+            authorLabel = (fullName != null && !fullName.isBlank()) ? fullName : username;
+        }
+
         return new TicketDetailResponse.CommentResponse(
                 comment.getId(),
-                comment.getAuthor().getUsername(),
+                authorLabel,
                 comment.isInternal(),
                 comment.getContent(),
                 comment.getCreatedAt()
