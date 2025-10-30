@@ -160,19 +160,23 @@
       <p *ngIf="resetError()" class="mt-1 text-xs text-red-600">{{ resetError() }}</p>
       <footer class="flex items-center justify-end gap-2 py-3">
         <button
-          class="rounded border border-slate-300 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
+          class="rounded border border-slate-300 px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
           type="button"
           (click)="closeReset()"
           [disabled]="resetProcessing()"
+          title="Cancel"
+          aria-label="Cancel"
         >
-          Cancel
+          <i class="fa-solid fa-times"></i>
         </button>
         <button
-          class="rounded bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-50"
+          class="rounded bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-50"
           type="submit"
           [disabled]="resetProcessing()"
+          title="Confirm reset"
+          aria-label="Confirm reset"
         >
-          {{ resetProcessing() ? 'Resetting�' : 'Confirm reset' }}
+          <i class="fa-solid fa-check"></i>
         </button>
       </footer>
     </form>
