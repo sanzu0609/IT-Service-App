@@ -13,7 +13,11 @@ public record TicketDetailResponse(
         String category,
         String categoryLabel,
         Long reporterId,
+        String reporterFullName,
+        String reporterUsername,
         Long assigneeId,
+        String assigneeFullName,
+        String assigneeUsername,
         Long relatedAssetId,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
@@ -42,3 +46,4 @@ public record TicketDetailResponse(
     ) {
     }
 }
+

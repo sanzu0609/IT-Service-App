@@ -196,6 +196,8 @@ public class TicketController {
                 ticket.getPriority().name(),
                 ticket.getCategory().name(),
                 ticket.getAssignee() != null ? ticket.getAssignee().getId() : null,
+                ticket.getAssignee() != null ? ticket.getAssignee().getFullName() : null,
+                ticket.getAssignee() != null ? ticket.getAssignee().getUsername() : null,
                 ticket.getRelatedAssetId(),
                 ticket.getCreatedAt()
         );
@@ -221,7 +223,11 @@ public class TicketController {
                 ticket.getCategory().name(),
                 ticket.getCategory().getLabel(),
                 ticket.getReporter().getId(),
+                ticket.getReporter().getFullName(),
+                ticket.getReporter().getUsername(),
                 ticket.getAssignee() != null ? ticket.getAssignee().getId() : null,
+                ticket.getAssignee() != null ? ticket.getAssignee().getFullName() : null,
+                ticket.getAssignee() != null ? ticket.getAssignee().getUsername() : null,
                 ticket.getRelatedAssetId(),
                 ticket.getCreatedAt(),
                 ticket.getUpdatedAt(),

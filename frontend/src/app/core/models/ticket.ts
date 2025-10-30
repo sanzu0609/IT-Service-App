@@ -1,5 +1,3 @@
-import { User } from './user';
-
 export type TicketStatus =
   | 'NEW'
   | 'IN_PROGRESS'
@@ -29,6 +27,12 @@ export const TICKET_CATEGORY_LABELS: Record<TicketCategory, string> = {
   SERVICES: 'Services'
 };
 
+export interface TicketUserRef {
+  id: number;
+  fullName?: string | null;
+  username?: string | null;
+}
+
 export interface Ticket {
   id: number;
   ticketNumber: string;
@@ -36,8 +40,8 @@ export interface Ticket {
   description: string;
   status: TicketStatus;
   priority: Priority;
-  reporter?: User | null;
-  assignee?: User | null;
+  reporter?: TicketUserRef | null;
+  assignee?: TicketUserRef | null;
   category: TicketCategory;
   categoryLabel?: string | null;
   relatedAssetId?: number | null;
@@ -50,8 +54,7 @@ export interface Ticket {
 
 export interface TicketComment {
   id: number;
-  ticketId: number;
-  author?: User | null;
+  authorName?: string | null;
   content: string;
   isInternal: boolean;
   createdAt: string;
