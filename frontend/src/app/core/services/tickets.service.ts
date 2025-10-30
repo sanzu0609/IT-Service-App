@@ -30,7 +30,6 @@ export interface CreateTicketPayload {
   description: string;
   priority: Priority;
   category: TicketCategory;
-  relatedAssetId?: number;
   attachments?: unknown;
 }
 
@@ -40,8 +39,6 @@ export interface UpdateTicketPayload {
   priority?: Priority;
   assigneeId?: number | null;
   category?: TicketCategory;
-  relatedAssetId?: number | null;
-  clearRelatedAsset?: boolean;
 }
 
 export interface AddCommentPayload {
@@ -142,7 +139,6 @@ interface TicketDetailResponseDto {
   assigneeId?: number | null;
   assigneeFullName?: string | null;
   assigneeUsername?: string | null;
-  relatedAssetId?: number | null;
   slaResponseDeadline?: string | null;
   slaResolutionDeadline?: string | null;
   slaFlag?: SlaFlag | null;
@@ -172,7 +168,6 @@ function mapTicketDetailResponse(dto: TicketDetailResponseDto): Ticket {
     assignee: toTicketUser(dto.assigneeId, dto.assigneeUsername, dto.assigneeFullName),
     category: dto.category,
     categoryLabel: dto.categoryLabel ?? null,
-    relatedAssetId: dto.relatedAssetId ?? null,
     slaResponseDeadline: dto.slaResponseDeadline ?? null,
     slaResolutionDeadline: dto.slaResolutionDeadline ?? null,
     slaFlag: dto.slaFlag ?? null,

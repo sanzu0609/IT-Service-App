@@ -149,7 +149,6 @@ public class DataSeeder implements CommandLineRunner {
         );
         vpnIssue.setTicketNumber(ticketNumberGenerator.nextTicketNumber());
         vpnIssue.setStatus(TicketStatus.IN_PROGRESS);
-        vpnIssue.setRelatedAssetId(4102L);
         if (agent != null) {
             vpnIssue.setAssignee(agent);
         }
@@ -164,7 +163,6 @@ public class DataSeeder implements CommandLineRunner {
         );
         hardwareIssue.setTicketNumber(ticketNumberGenerator.nextTicketNumber());
         hardwareIssue.setStatus(TicketStatus.NEW);
-        hardwareIssue.setRelatedAssetId(5120L);
         slaService.initializeSla(hardwareIssue, now.minusHours(1));
 
         Ticket onboardingRequest = new Ticket(

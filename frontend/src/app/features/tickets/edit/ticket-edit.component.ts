@@ -62,7 +62,6 @@ export class TicketEditComponent implements OnInit, OnDestroy {
   readonly canEditDescription = signal(false);
   readonly canEditPriority = signal(false);
   readonly canAssign = signal(false);
-  readonly canEditAsset = signal(false);
   readonly canCancel = signal(false);
   readonly canEditCategory = signal(false);
 
@@ -72,7 +71,6 @@ export class TicketEditComponent implements OnInit, OnDestroy {
     priority: ['MEDIUM' as Priority, Validators.required],
     assigneeId: [''],
     category: ['', Validators.required],
-    relatedAssetId: ['']
   });
 
   ngOnInit(): void {
@@ -90,7 +88,6 @@ export class TicketEditComponent implements OnInit, OnDestroy {
       this.canEditDescription() ||
       this.canEditPriority() ||
       this.canAssign() ||
-      this.canEditAsset() ||
       this.canEditCategory()
   );
 
@@ -162,9 +159,6 @@ export class TicketEditComponent implements OnInit, OnDestroy {
     if (this.canAssign()) {
       const assigneeId = this.normalizeOptionalNumber(raw.assigneeId);
       payload.assigneeId = assigneeId ?? null;
-    }
-    if (this.canEditAsset()) {
-      payload.relatedAssetId = this.normalizeOptionalNumber(raw.relatedAssetId) ?? null;
     }
     if (this.canEditCategory()) {
       const category = this.normalizeCategory(raw.category);
@@ -286,7 +280,6 @@ export class TicketEditComponent implements OnInit, OnDestroy {
       priority: ticket.priority,
       assigneeId: ticket.assignee?.id != null ? String(ticket.assignee.id) : '',
       category: ticket.category ?? '',
-      relatedAssetId: ticket.relatedAssetId != null ? String(ticket.relatedAssetId) : ''
     });
 
     this.applyPermissions(ticket);
@@ -301,7 +294,6 @@ export class TicketEditComponent implements OnInit, OnDestroy {
     const canEditDescription = canEditSubject;
     const canEditPriority = isAdmin || isAgent;
     const canAssign = isAdmin || isAgent;
-    const canEditAsset = isAdmin || isAgent;
     const canEditCategory = isAdmin || isAgent;
     const canCancel = isAdmin || isAgent;
 
@@ -309,7 +301,6 @@ export class TicketEditComponent implements OnInit, OnDestroy {
     this.canEditDescription.set(canEditDescription);
     this.canEditPriority.set(canEditPriority);
     this.canAssign.set(canAssign);
-    this.canEditAsset.set(canEditAsset);
     this.canCancel.set(canCancel);
     this.canEditCategory.set(canEditCategory);
 
@@ -326,12 +317,6 @@ export class TicketEditComponent implements OnInit, OnDestroy {
       canEditCategory,
       ticket.category ?? ''
     );
-    this.toggleControl(
-      this.form.controls.relatedAssetId,
-      canEditAsset,
-      ticket.relatedAssetId != null ? String(ticket.relatedAssetId) : ''
-    );
-
     if (canEditCategory) {
       this.ensureCategoriesLoaded(ticket.category ?? null);
     } else {

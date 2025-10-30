@@ -73,8 +73,7 @@ public class TicketController {
                         request.subject(),
                         request.description(),
                         request.priority(),
-                        request.category(),
-                        request.relatedAssetId()
+                        request.category()
                 ),
                 actor
         );
@@ -126,9 +125,7 @@ public class TicketController {
                 new UpdateTicketCommand(
                         request.assigneeId(),
                         request.priority(),
-                        request.category(),
-                        Boolean.TRUE.equals(request.clearRelatedAsset()),
-                        request.relatedAssetId()
+                        request.category()
                 ),
                 actor
         );
@@ -198,7 +195,6 @@ public class TicketController {
                 ticket.getAssignee() != null ? ticket.getAssignee().getId() : null,
                 ticket.getAssignee() != null ? ticket.getAssignee().getFullName() : null,
                 ticket.getAssignee() != null ? ticket.getAssignee().getUsername() : null,
-                ticket.getRelatedAssetId(),
                 ticket.getCreatedAt()
         );
     }
@@ -228,7 +224,6 @@ public class TicketController {
                 ticket.getAssignee() != null ? ticket.getAssignee().getId() : null,
                 ticket.getAssignee() != null ? ticket.getAssignee().getFullName() : null,
                 ticket.getAssignee() != null ? ticket.getAssignee().getUsername() : null,
-                ticket.getRelatedAssetId(),
                 ticket.getCreatedAt(),
                 ticket.getUpdatedAt(),
                 ticket.getResolvedAt(),

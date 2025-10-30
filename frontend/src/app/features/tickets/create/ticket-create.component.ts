@@ -50,8 +50,7 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
     subject: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(200)]],
     description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(4000)]],
     priority: ['MEDIUM' as Priority, Validators.required],
-    category: ['', Validators.required],
-    relatedAssetId: ['']
+    category: ['', Validators.required]
   });
 
   async ngOnInit(): Promise<void> {
@@ -83,7 +82,7 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const { subject, description, priority, category, relatedAssetId } = this.form.getRawValue();
+    const { subject, description, priority, category } = this.form.getRawValue();
     const trimmedSubject = subject.trim();
     const trimmedDescription = description.trim();
 
@@ -112,8 +111,7 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
       subject: trimmedSubject,
       description: trimmedDescription,
       priority: priority ?? 'MEDIUM',
-      category: resolvedCategory as TicketCategory,
-      relatedAssetId: this.normalizeOptionalNumber(relatedAssetId)
+      category: resolvedCategory as TicketCategory
     };
 
     this.loading.set(true);
@@ -215,18 +213,4 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
     return fallback;
   }
 
-  private normalizeOptionalNumber(value: unknown): number | undefined {
-    if (value === undefined || value === null || value === '') {
-      return undefined;
-    }
-
-    const normalized =
-      typeof value === 'string' ? value.trim() : value;
-    if (normalized === '') {
-      return undefined;
-    }
-
-    const parsed = Number(normalized);
-    return Number.isNaN(parsed) ? undefined : parsed;
-  }
 }

@@ -7,7 +7,6 @@ public record CreateTicketCommand(
         String subject,
         String description,
         TicketPriority priority,
-        TicketCategory category,
-        Long relatedAssetId
+        TicketCategory category
 ) {
 }

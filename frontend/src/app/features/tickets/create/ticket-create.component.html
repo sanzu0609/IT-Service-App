@@ -63,16 +63,6 @@
       </div>
     </div>
 
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-semibold text-slate-700" for="ticket-asset">Related asset ID (optional)</label>
-      <input
-        id="ticket-asset"
-        class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-        placeholder="e.g., 1234"
-        formControlName="relatedAssetId"
-      />
-    </div>
-
     <div *ngIf="error()" class="rounded border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
       {{ error() }}
     </div>

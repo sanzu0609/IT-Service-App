@@ -6,8 +6,6 @@ import org.example.backend.domain.ticket.enums.TicketPriority;
 public record UpdateTicketRequest(
         Long assigneeId,
         TicketPriority priority,
-        TicketCategory category,
-        Boolean clearRelatedAsset,
-        Long relatedAssetId
+        TicketCategory category
 ) {
 }

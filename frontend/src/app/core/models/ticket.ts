@@ -44,7 +44,6 @@ export interface Ticket {
   assignee?: TicketUserRef | null;
   category: TicketCategory;
   categoryLabel?: string | null;
-  relatedAssetId?: number | null;
   slaResponseDeadline?: string | null;
   slaResolutionDeadline?: string | null;
   slaFlag?: SlaFlag | null;

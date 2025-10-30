@@ -12,7 +12,6 @@ public record TicketSummaryResponse(
         Long assigneeId,
         String assigneeFullName,
         String assigneeUsername,
-        Long relatedAssetId,
         LocalDateTime createdAt
 ) {
 }

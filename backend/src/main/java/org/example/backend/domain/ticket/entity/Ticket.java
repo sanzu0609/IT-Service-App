@@ -60,9 +60,6 @@ public class Ticket {
     @Column(name = "category", nullable = false, length = 32)
     private TicketCategory category;
 
-    @Column(name = "related_asset_id")
-    private Long relatedAssetId;
-
     @Column(name = "sla_response_deadline")
     private LocalDateTime slaResponseDeadline;
 
@@ -196,14 +193,6 @@ public class Ticket {
 
     public void setCategory(TicketCategory category) {
         this.category = category;
-    }
-
-    public Long getRelatedAssetId() {
-        return relatedAssetId;
-    }
-
-    public void setRelatedAssetId(Long relatedAssetId) {
-        this.relatedAssetId = relatedAssetId;
     }
 
     public LocalDateTime getSlaResponseDeadline() {
