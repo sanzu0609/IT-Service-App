@@ -21,6 +21,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DateUtcPipe } from '../../../shared/pipes/date-utc.pipe';
 import { CountdownComponent } from '../../../shared/components/countdown/countdown.component';
+import { getSlaClass } from '../utils/ticket-style.util';
 
 const STATUS_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   NEW: ['IN_PROGRESS', 'ON_HOLD', 'CANCELLED'],
@@ -138,6 +139,14 @@ export class TicketDetailComponent implements OnInit {
 
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private readonly POLL_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+
+  // expose helper for templates to get SLA badge classes
+  slaClass(flag?: unknown): string {
+    // delegate to shared util; coerce unknown to expected union
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return getSlaClass(flag);
+  }
 
   async ngOnInit(): Promise<void> {
     this.statusForm.controls.holdReason.disable({ emitEvent: false });
