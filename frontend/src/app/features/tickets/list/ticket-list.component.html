@@ -44,17 +44,18 @@
       </button>
     </div>
     <div class="ml-auto">
-      <a
-        *ngIf="canCreate()"
-        class="inline-flex items-center rounded border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-        [routerLink]="['/tickets/create']"
-        title="Create ticket"
-        aria-label="Create ticket"
-      >
+      <button *ngIf="canCreate()" type="button" (click)="openCreate()" class="inline-flex items-center rounded border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100" title="Create ticket" aria-label="Create ticket">
         <i class="fa-solid fa-plus"></i>
-      </a>
+      </button>
     </div>
   </header>
+
+  <!-- inline modal: create -->
+  <app-ticket-create *ngIf="showCreateModal()" [modal]="true" (closed)="onCreateClosed($event)"></app-ticket-create>
+
+  <!-- inline modal: edit -->
+  <app-ticket-edit *ngIf="editingTicketId()" [modal]="true" [modalTicketId]="editingTicketId()" (closed)="onEditClosed($event)"></app-ticket-edit>
+
 
   <div *ngIf="error()" class="rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
     {{ error() }}
@@ -105,15 +106,16 @@
             >
               <i class="fa-solid fa-eye"></i>
             </a>
-            <a
+            <button
               *ngIf="canEdit(ticket)"
+              type="button"
               class="text-blue-600 px-2"
-              [routerLink]="['/tickets', ticket.id, 'edit']"
+              (click)="openEdit(ticket.id)"
               title="Edit ticket"
               aria-label="Edit ticket"
             >
               <i class="fa-solid fa-pen"></i>
-            </a>
+            </button>
             <button
               *ngIf="canCancel(ticket)"
               type="button"

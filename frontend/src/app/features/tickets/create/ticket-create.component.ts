@@ -5,7 +5,10 @@ import {
   OnDestroy,
   OnInit,
   inject,
-  signal
+  signal,
+  Input,
+  Output,
+  EventEmitter
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -28,6 +31,8 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TicketCreateComponent implements OnInit, OnDestroy {
+  @Input() modal = false;
+  @Output() closed = new EventEmitter<number | null>();
   private readonly fb = inject(FormBuilder);
   private readonly tickets = inject(TicketsService);
   private readonly toast = inject(ToastService);
@@ -189,7 +194,12 @@ export class TicketCreateComponent implements OnInit, OnDestroy {
 
   private handleSuccess(ticket: Ticket): void {
     this.toast.success('Ticket created successfully.');
-    this.router.navigate(['/tickets', ticket.id]);
+    if (this.modal) {
+      // emit created id to parent and close
+      this.closed.emit(ticket.id);
+    } else {
+      this.router.navigate(['/tickets', ticket.id]);
+    }
   }
 
   private handleError(error: unknown): void {
