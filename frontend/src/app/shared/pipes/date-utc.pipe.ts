@@ -1,4 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
+import { toDate } from '../utils/time.util';
 
 @Pipe({
   name: 'dateUtc',
@@ -10,8 +11,8 @@ export class DateUtcPipe implements PipeTransform {
       return fallback;
     }
 
-    const date = typeof value === 'string' ? new Date(value) : value;
-    if (Number.isNaN(date.getTime())) {
+    const date = toDate(value);
+    if (!date) {
       return fallback;
     }
 
