@@ -85,16 +85,16 @@
           <td class="px-3 py-3">{{ ticket.priority }}</td>
           <td class="px-3 py-3">
             <app-sla-badge [flag]="(getDetail(ticket.id)?.slaFlag) ?? ticket.slaFlag"></app-sla-badge>
-            <div *ngIf="getDetail(ticket.id) as d" class="mt-1 space-y-1 text-xs text-slate-500">
+            <div class="mt-1 space-y-1 text-xs text-slate-500">
               <div>
                 <span class="font-medium">Resp:</span>
-                <span>{{ d.slaResponseDeadline | dateUtc }}</span>
-                <app-countdown *ngIf="d.slaResponseDeadline" [target]="d.slaResponseDeadline"></app-countdown>
+                <span>{{ (getDetail(ticket.id)?.slaResponseDeadline ?? ticket.slaResponseDeadline) | dateUtc }}</span>
+                <app-countdown *ngIf="(getDetail(ticket.id)?.slaResponseDeadline ?? ticket.slaResponseDeadline)" [target]="(getDetail(ticket.id)?.slaResponseDeadline ?? ticket.slaResponseDeadline)"></app-countdown>
               </div>
               <div>
                 <span class="font-medium">Reso:</span>
-                <span>{{ d.slaResolutionDeadline | dateUtc }}</span>
-                <app-countdown *ngIf="d.slaResolutionDeadline" [target]="d.slaResolutionDeadline"></app-countdown>
+                <span>{{ (getDetail(ticket.id)?.slaResolutionDeadline ?? ticket.slaResolutionDeadline) | dateUtc }}</span>
+                <app-countdown *ngIf="(getDetail(ticket.id)?.slaResolutionDeadline ?? ticket.slaResolutionDeadline)" [target]="(getDetail(ticket.id)?.slaResolutionDeadline ?? ticket.slaResolutionDeadline)"></app-countdown>
               </div>
             </div>
           </td>

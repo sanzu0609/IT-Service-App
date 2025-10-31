@@ -66,6 +66,8 @@ export interface TicketSummary {
   status: TicketStatus;
   priority: Priority;
   category: TicketCategory;
+  slaResponseDeadline?: string | null;
+  slaResolutionDeadline?: string | null;
   slaFlag?: SlaFlag | null;
   createdAt: string;
   assigneeId?: number | null;
