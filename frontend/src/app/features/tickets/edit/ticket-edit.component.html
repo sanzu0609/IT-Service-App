@@ -1,4 +1,5 @@
-<section class="mx-auto flex w-full max-w-3xl flex-col gap-4">
+<div class="min-h-screen flex items-center justify-center px-4 py-8">
+  <section class="w-full max-w-3xl flex flex-col gap-4">
   <header class="flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-semibold text-slate-900">Edit Ticket</h1>
@@ -111,4 +112,5 @@
       <p *ngIf="!saving() && !canSave()" class="text-xs text-slate-500">You do not have permission to modify this ticket.</p>
     </div>
   </form>
-</section>
+  </section>
+</div>
