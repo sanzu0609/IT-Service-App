@@ -24,7 +24,7 @@
             class="rounded border border-slate-300 px-3 py-2"
             placeholder="Username"
             formControlName="username"
-            [disabled]="mode === 'edit' || formDisabled"
+          />
           />
           <p class="text-xs text-red-600" *ngIf="form.controls.username.invalid && form.controls.username.touched && mode === 'create'">
             Username is required (3-50 characters).
@@ -37,7 +37,7 @@
             class="rounded border border-slate-300 px-3 py-2"
             placeholder="Email"
             formControlName="email"
-            [disabled]="formDisabled"
+          />
           />
           <p class="text-xs text-red-600" *ngIf="form.controls.email.invalid && form.controls.email.touched">
             Provide a valid email address.
@@ -50,13 +50,13 @@
             class="rounded border border-slate-300 px-3 py-2"
             placeholder="Full name"
             formControlName="fullName"
-            [disabled]="formDisabled"
+          />
           />
         </div>
 
         <div class="flex flex-col gap-1">
           <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Role</label>
-          <select class="rounded border border-slate-300 px-3 py-2" formControlName="role" [disabled]="formDisabled">
+          <select class="rounded border border-slate-300 px-3 py-2" formControlName="role">
             <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
           </select>
         </div>
@@ -66,7 +66,6 @@
           <select
             class="rounded border border-slate-300 px-3 py-2"
             formControlName="departmentId"
-            [disabled]="formDisabled || departmentsLoading"
           >
             <option [ngValue]="undefined">-- No department --</option>
             <option *ngFor="let department of departments" [ngValue]="department.id">
@@ -89,7 +88,7 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <input id="active" type="checkbox" formControlName="active" class="h-4 w-4" [disabled]="formDisabled" />
+          <input id="active" type="checkbox" formControlName="active" class="h-4 w-4" />
           <label class="text-sm text-slate-700" for="active">Active</label>
         </div>
       </div>
