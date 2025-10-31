@@ -17,6 +17,9 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/user';
 import { ToastService } from '../../../core/services/toast.service';
 import { SlaBadgeComponent } from '../../../shared/components/sla-badge/sla-badge.component';
+import { CountdownComponent } from '../../../shared/components/countdown/countdown.component';
+import { DateUtcPipe } from '../../../shared/pipes/date-utc.pipe';
+import { Ticket } from '../../../core/models/ticket';
 import { TicketStatusChipComponent } from '../components/ticket-status-chip.component';
 
 @Component({
@@ -27,6 +30,8 @@ import { TicketStatusChipComponent } from '../components/ticket-status-chip.comp
     FormsModule,
     RouterLink,
     SlaBadgeComponent,
+    CountdownComponent,
+    DateUtcPipe,
     TicketStatusChipComponent
   ],
   templateUrl: './ticket-list.component.html',
@@ -67,6 +72,8 @@ export class TicketListComponent implements OnInit {
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private readonly POLL_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
   private readonly destroyRef = inject(DestroyRef);
+  // simple in-memory cache for ticket details on the current page
+  private readonly detailCache = new Map<number, Ticket>();
 
 
   filterState: { status?: TicketStatus; priority?: Priority; search?: string } = {};
@@ -229,12 +236,50 @@ export class TicketListComponent implements OnInit {
         next: response => {
           this.page.set(response);
           this.syncFilterState();
+          // fetch details (deadlines, full SLA info) for visible tickets
+          this.loadDetailsForCurrentPage();
         },
         error: err => {
           this.error.set(this.resolveErrorMessage(err));
           this.page.set(null);
         }
       });
+  }
+
+  private loadDetailsForCurrentPage(): void {
+    const current = this.page();
+    if (!current || !current.content.length) {
+      this.detailCache.clear();
+      return;
+    }
+
+    const idsOnPage = new Set(current.content.map(t => t.id));
+
+    // remove cached entries not on current page
+    for (const id of Array.from(this.detailCache.keys())) {
+      if (!idsOnPage.has(id)) {
+        this.detailCache.delete(id);
+      }
+    }
+
+    // fetch details for tickets not cached
+    for (const t of current.content) {
+      if (this.detailCache.has(t.id)) {
+        continue;
+      }
+      this.tickets.get(t.id).subscribe({
+        next: full => {
+          this.detailCache.set(full.id, full);
+        },
+        error: () => {
+          // ignore per-item errors; badge from summary still shows
+        }
+      });
+    }
+  }
+
+  getDetail(id: number): Ticket | undefined {
+    return this.detailCache.get(id);
   }
 
   private normalizeFilters(params: TicketListParams): TicketListParams {
