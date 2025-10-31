@@ -17,7 +17,6 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/user';
 import { ToastService } from '../../../core/services/toast.service';
 import { CountdownComponent } from '../../../shared/components/countdown/countdown.component';
-import { DateUtcPipe } from '../../../shared/pipes/date-utc.pipe';
 import { getSlaClass, getSlaLabel } from '../utils/ticket-style.util';
 import { Ticket } from '../../../core/models/ticket';
 import { TicketStatusChipComponent } from '../components/ticket-status-chip.component';

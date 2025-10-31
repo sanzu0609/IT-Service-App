@@ -1,31 +1,24 @@
-<!-- modal backdrop navigates back to ticket detail or closes modal when used inline -->
-<ng-container *ngIf="!modal; else modalBackdrop">
-  <a [routerLink]="['/tickets', ticketId() ?? '']" class="fixed inset-0 bg-black/50"></a>
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-</ng-container>
-<ng-template #modalBackdrop>
-  <div class="fixed inset-0 bg-black/50" (click)="closed.emit(null)"></div>
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-</ng-template>
+<!-- modal content template (shared by route and inline modal rendering) -->
+<ng-template #modalContent>
   <section class="w-full max-w-3xl flex flex-col gap-4 bg-transparent">
-  <header class="flex items-start justify-between">
-    <div>
-      <h1 class="text-2xl font-semibold text-slate-900">Edit Ticket</h1>
-      <p class="text-sm text-slate-600">Update details or assignment based on your permissions.</p>
+    <header class="flex items-start justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-slate-900">Edit Ticket</h1>
+        <p class="text-sm text-slate-600">Update details or assignment based on your permissions.</p>
+      </div>
+      <a *ngIf="!modal" class="text-sm font-semibold text-emerald-700 hover:underline" [routerLink]="['/tickets', ticketId() ?? '']">Back to detail</a>
+      <button *ngIf="modal" type="button" (click)="closed.emit(null)" class="text-sm font-semibold text-emerald-700 hover:underline">Close</button>
+    </header>
+
+    <div *ngIf="loading()" class="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
+      Loading ticket data...
     </div>
-  <a *ngIf="!modal" class="text-sm font-semibold text-emerald-700 hover:underline" [routerLink]="['/tickets', ticketId() ?? '']">Back to detail</a>
-  <button *ngIf="modal" type="button" (click)="closed.emit(null)" class="text-sm font-semibold text-emerald-700 hover:underline">Close</button>
-  </header>
 
-  <div *ngIf="loading()" class="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
-    Loading ticket data...
-  </div>
+    <div *ngIf="error()" class="rounded-lg border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700 shadow-sm">
+      {{ error() }}
+    </div>
 
-  <div *ngIf="error()" class="rounded-lg border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700 shadow-sm">
-    {{ error() }}
-  </div>
-
-  <form *ngIf="!loading() && ticket()" [formGroup]="form" (ngSubmit)="save()" class="space-y-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm relative">
+    <form *ngIf="!loading() && ticket()" [formGroup]="form" (ngSubmit)="save()" class="space-y-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm relative">
       <ng-container *ngIf="!modal; else modalClose">
         <a [routerLink]="['/tickets', ticketId() ?? '']" title="Close" aria-label="Close" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600">
           <i class="fa-solid fa-xmark fa-lg"></i>
@@ -130,6 +123,22 @@
       <span *ngIf="saving()" class="text-xs text-slate-500">Processing...</span>
       <p *ngIf="!saving() && !canSave()" class="text-xs text-slate-500">You do not have permission to modify this ticket.</p>
     </div>
-  </form>
+    </form>
   </section>
-</div>
+</ng-template>
+
+<!-- route rendering -->
+<ng-container *ngIf="!modal; else modalBackdrop">
+  <a [routerLink]="['/tickets', ticketId() ?? '']" class="fixed inset-0 bg-black/50"></a>
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <ng-container *ngTemplateOutlet="modalContent"></ng-container>
+  </div>
+</ng-container>
+
+<!-- inline modal rendering -->
+<ng-template #modalBackdrop>
+  <div class="fixed inset-0 bg-black/50" (click)="closed.emit(null)"></div>
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <ng-container *ngTemplateOutlet="modalContent"></ng-container>
+  </div>
+</ng-template>
