@@ -10,7 +10,7 @@ public record UserSummaryResponse(
         String role,
         DepartmentLiteDto department,
         Long departmentId,
-        boolean isActive,
+        boolean active,
         boolean mustChangePassword
 ) {
 }

@@ -22,6 +22,6 @@ public record UpdateUserRequest(
 
         Boolean clearDepartment,
 
-        Boolean isActive
+        Boolean active
 ) {
 }
