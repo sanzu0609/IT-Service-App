@@ -6,10 +6,7 @@ import {
   OnInit,
   computed,
   inject,
-  signal,
-  Input,
-  Output,
-  EventEmitter
+  signal
 } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -34,16 +31,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TicketEditComponent implements OnInit, OnDestroy {
-  @Input() modal = false;
-  // when used as modal, parent can set this to load the ticket
-  @Input() set modalTicketId(id: number | null) {
-    if (id == null) {
-      return;
-    }
-    this.ticketId.set(id);
-    this.fetchTicket(id);
-  }
-  @Output() closed = new EventEmitter<number | null>();
+  // route-mode edit (default); modal mode removed
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
@@ -221,11 +209,7 @@ export class TicketEditComponent implements OnInit, OnDestroy {
       .subscribe({
         next: updated => {
           this.toast.success('Ticket cancelled.');
-          if (this.modal) {
-            this.closed.emit(updated.id);
-          } else {
-            this.router.navigate(['/tickets', updated.id]);
-          }
+          this.router.navigate(['/tickets', updated.id]);
         },
         error: err => {
           const message = this.extractErrorMessage(err);
@@ -422,11 +406,7 @@ export class TicketEditComponent implements OnInit, OnDestroy {
 
   private handleSaveSuccess(ticket: Ticket): void {
     this.toast.success('Ticket updated successfully.');
-    if (this.modal) {
-      this.closed.emit(ticket.id);
-    } else {
-      this.router.navigate(['/tickets', ticket.id]);
-    }
+    this.router.navigate(['/tickets', ticket.id]);
   }
 
   private extractErrorMessage(error: unknown): string {

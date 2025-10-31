@@ -8,7 +8,7 @@ import {
   signal
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { Page } from '../../../core/models/api';
 import { Priority, TicketStatus, TicketSummary } from '../../../core/models/ticket';
@@ -20,8 +20,7 @@ import { CountdownComponent } from '../../../shared/components/countdown/countdo
 import { getSlaClass, getSlaLabel } from '../utils/ticket-style.util';
 import { Ticket } from '../../../core/models/ticket';
 import { TicketStatusChipComponent } from '../components/ticket-status-chip.component';
-import { TicketCreateComponent } from '../create/ticket-create.component';
-import { TicketEditComponent } from '../edit/ticket-edit.component';
+
 
 @Component({
   selector: 'app-ticket-list',
@@ -31,9 +30,7 @@ import { TicketEditComponent } from '../edit/ticket-edit.component';
     FormsModule,
     RouterLink,
     CountdownComponent,
-    TicketStatusChipComponent,
-    TicketCreateComponent,
-    TicketEditComponent
+    TicketStatusChipComponent
   ],
   templateUrl: './ticket-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -67,8 +64,7 @@ export class TicketListComponent implements OnInit {
   });
 
   readonly allowCreate = signal(false);
-  readonly showCreateModal = signal(false);
-  readonly editingTicketId = signal<number | null>(null);
+  
   private readonly userRole = signal<Role | null>(null);
   private readonly currentUserId = signal<number | null>(null);
   readonly cancelling = signal<number | null>(null);
@@ -77,7 +73,7 @@ export class TicketListComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   // simple in-memory cache for ticket details on the current page
   private readonly detailCache = new Map<number, Ticket>();
-  private readonly router = inject(Router);
+  
 
   // expose SLA helpers for template
   slaClass(flag?: unknown): string {
@@ -86,31 +82,7 @@ export class TicketListComponent implements OnInit {
     return getSlaClass(flag);
   }
 
-  openCreate(): void {
-    this.showCreateModal.set(true);
-  }
-
-  async onCreateClosed(createdId: number | null): Promise<void> {
-    this.showCreateModal.set(false);
-    // reload list to show created ticket
-    this.load();
-    if (createdId != null) {
-      // navigate to detail after closing modal
-      this.router.navigate(['/tickets', createdId]);
-    }
-  }
-
-  openEdit(id: number): void {
-    this.editingTicketId.set(id);
-  }
-
-  onEditClosed(updatedId: number | null): void {
-    this.editingTicketId.set(null);
-    this.load();
-    if (updatedId != null) {
-      this.router.navigate(['/tickets', updatedId]);
-    }
-  }
+  
 
   slaLabel(flag?: unknown): string {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment

@@ -1,26 +1,19 @@
-<!-- modal content template (shared by inline and route rendering) -->
-<ng-template #modalContent>
+<!-- backdrop: clicking returns to list -->
+<a [routerLink]="['/tickets']" class="fixed inset-0 bg-black/50"></a>
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
   <section class="w-full max-w-3xl flex flex-col gap-4 bg-transparent">
     <header class="flex items-start justify-between">
       <div>
         <h1 class="text-2xl font-semibold text-slate-900">Create Ticket</h1>
         <p class="text-sm text-slate-600">Describe your issue and set an appropriate priority.</p>
       </div>
-      <a *ngIf="!modal" class="text-sm font-semibold text-emerald-700 hover:underline" [routerLink]="['/tickets']">Back to list</a>
-      <button *ngIf="modal" type="button" (click)="closed.emit(null)" class="text-sm font-semibold text-emerald-700 hover:underline">Close</button>
+      <a class="text-sm font-semibold text-emerald-700 hover:underline" [routerLink]="['/tickets']">Back to list</a>
     </header>
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm relative">
-      <ng-container *ngIf="!modal; else modalClose">
-        <a [routerLink]="['/tickets']" title="Close" aria-label="Close" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600">
-          <i class="fa-solid fa-xmark fa-lg"></i>
-        </a>
-      </ng-container>
-      <ng-template #modalClose>
-        <button type="button" title="Close" aria-label="Close" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600" (click)="closed.emit(null)">
-          <i class="fa-solid fa-xmark fa-lg"></i>
-        </button>
-      </ng-template>
+      <a [routerLink]="['/tickets']" title="Close" aria-label="Close" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600">
+        <i class="fa-solid fa-xmark fa-lg"></i>
+      </a>
     <div class="flex flex-col gap-2">
       <label class="text-sm font-semibold text-slate-700" for="ticket-subject">Subject</label>
       <input
@@ -94,21 +87,4 @@
     </div>
     </form>
   </section>
-</ng-template>
-
-<!-- non-modal (route) rendering -->
-<ng-container *ngIf="!modal; else modalBackdrop">
-  <a [routerLink]="['/tickets']" class="fixed inset-0 bg-black/50"></a>
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <ng-container *ngTemplateOutlet="modalContent"></ng-container>
-  </div>
-</ng-container>
-
-<!-- modal (inline) rendering -->
-<ng-template #modalBackdrop>
-  <div class="fixed inset-0 bg-black/50" (click)="closed.emit(null)"></div>
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <ng-container *ngTemplateOutlet="modalContent"></ng-container>
-  </div>
-</ng-template>
 
