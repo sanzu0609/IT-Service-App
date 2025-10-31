@@ -21,7 +21,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DateUtcPipe } from '../../../shared/pipes/date-utc.pipe';
 import { CountdownComponent } from '../../../shared/components/countdown/countdown.component';
-import { getSlaClass } from '../utils/ticket-style.util';
+import { getSlaClass, getSlaLabel } from '../utils/ticket-style.util';
 
 const STATUS_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   NEW: ['IN_PROGRESS', 'ON_HOLD', 'CANCELLED'],
@@ -42,7 +42,6 @@ const AGENT_ALLOWED: TicketStatus[] = ['IN_PROGRESS', 'RESOLVED'];
     CommonModule,
     RouterLink,
     ReactiveFormsModule,
-    SlaBadgeComponent,
     TicketStatusChipComponent,
     DateUtcPipe,
     CountdownComponent
@@ -146,6 +145,12 @@ export class TicketDetailComponent implements OnInit {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     return getSlaClass(flag);
+  }
+
+  slaLabel(flag?: unknown): string {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return getSlaLabel(flag);
   }
 
   async ngOnInit(): Promise<void> {

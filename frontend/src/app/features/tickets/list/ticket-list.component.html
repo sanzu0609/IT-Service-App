@@ -86,7 +86,12 @@
           <td class="px-3 py-2 align-top">
             <div class="flex flex-col items-start gap-1">
               <div class="self-start">
-                <app-sla-badge [flag]="(getDetail(ticket.id)?.slaFlag) ?? ticket.slaFlag"></app-sla-badge>
+                <ng-container *ngIf="getSlaTarget(ticket) as target">
+                  <span [ngClass]="slaClass((getDetail(ticket.id)?.slaFlag) ?? ticket.slaFlag)" [attr.aria-label]="slaLabel((getDetail(ticket.id)?.slaFlag) ?? ticket.slaFlag)">
+                    <app-countdown [target]="target" [compact]="true"></app-countdown>
+                  </span>
+                </ng-container>
+                <span *ngIf="!getSlaTarget(ticket)" class="text-sm text-slate-500">N/A</span>
               </div>
             </div>
           </td>

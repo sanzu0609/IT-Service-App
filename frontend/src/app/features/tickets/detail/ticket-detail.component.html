@@ -41,7 +41,14 @@
           <div>
             <dt class="font-semibold text-slate-500">SLA</dt>
             <dd class="mt-1">
-              <app-sla-badge [flag]="current.slaFlag"></app-sla-badge>
+              <div class="flex items-center gap-3">
+                <ng-container *ngIf="(current.slaResponseDeadline ?? current.slaResolutionDeadline) as target">
+                  <span [ngClass]="slaClass(current.slaFlag)" [attr.aria-label]="slaLabel(current.slaFlag)">
+                    <app-countdown [target]="target" [compact]="true"></app-countdown>
+                  </span>
+                </ng-container>
+                <span *ngIf="!current.slaResponseDeadline && !current.slaResolutionDeadline" class="text-sm text-slate-500">N/A</span>
+              </div>
             </dd>
           </div>
           <div>

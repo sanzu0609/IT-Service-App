@@ -7,7 +7,7 @@ export type TicketStatus =
   | 'REOPENED'
   | 'CANCELLED';
 
-export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'IMPROVEMENT';
 export type SlaFlag = 'OK' | 'NEAR' | 'BREACHED';
 
 export type TicketCategory =

@@ -16,9 +16,9 @@ import { TicketListParams, TicketsService } from '../../../core/services/tickets
 import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/user';
 import { ToastService } from '../../../core/services/toast.service';
-import { SlaBadgeComponent } from '../../../shared/components/sla-badge/sla-badge.component';
 import { CountdownComponent } from '../../../shared/components/countdown/countdown.component';
 import { DateUtcPipe } from '../../../shared/pipes/date-utc.pipe';
+import { getSlaClass, getSlaLabel } from '../utils/ticket-style.util';
 import { Ticket } from '../../../core/models/ticket';
 import { TicketStatusChipComponent } from '../components/ticket-status-chip.component';
 
@@ -29,9 +29,7 @@ import { TicketStatusChipComponent } from '../components/ticket-status-chip.comp
     CommonModule,
     FormsModule,
     RouterLink,
-    SlaBadgeComponent,
     CountdownComponent,
-    DateUtcPipe,
     TicketStatusChipComponent
   ],
   templateUrl: './ticket-list.component.html',
@@ -74,6 +72,26 @@ export class TicketListComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   // simple in-memory cache for ticket details on the current page
   private readonly detailCache = new Map<number, Ticket>();
+
+  // expose SLA helpers for template
+  slaClass(flag?: unknown): string {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return getSlaClass(flag);
+  }
+
+  slaLabel(flag?: unknown): string {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return getSlaLabel(flag);
+  }
+
+  getSlaTarget(ticket: TicketSummary): string | undefined {
+    const detail = this.getDetail(ticket.id);
+    return (
+      detail?.slaResponseDeadline ?? ticket.slaResponseDeadline ?? detail?.slaResolutionDeadline ?? ticket.slaResolutionDeadline ?? undefined
+    );
+  }
 
 
   filterState: { status?: TicketStatus; priority?: Priority; search?: string } = {};
