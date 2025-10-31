@@ -83,18 +83,10 @@
             <app-ticket-status-chip [status]="ticket.status"></app-ticket-status-chip>
           </td>
           <td class="px-3 py-3">{{ ticket.priority }}</td>
-          <td class="px-3 py-3">
-            <app-sla-badge [flag]="(getDetail(ticket.id)?.slaFlag) ?? ticket.slaFlag"></app-sla-badge>
-            <div class="mt-1 space-y-1 text-xs text-slate-500">
-              <div>
-                <span class="font-medium">Resp:</span>
-                <span>{{ (getDetail(ticket.id)?.slaResponseDeadline ?? ticket.slaResponseDeadline) | dateUtc }}</span>
-                <app-countdown *ngIf="(getDetail(ticket.id)?.slaResponseDeadline ?? ticket.slaResponseDeadline)" [target]="(getDetail(ticket.id)?.slaResponseDeadline ?? ticket.slaResponseDeadline)"></app-countdown>
-              </div>
-              <div>
-                <span class="font-medium">Reso:</span>
-                <span>{{ (getDetail(ticket.id)?.slaResolutionDeadline ?? ticket.slaResolutionDeadline) | dateUtc }}</span>
-                <app-countdown *ngIf="(getDetail(ticket.id)?.slaResolutionDeadline ?? ticket.slaResolutionDeadline)" [target]="(getDetail(ticket.id)?.slaResolutionDeadline ?? ticket.slaResolutionDeadline)"></app-countdown>
+          <td class="px-3 py-2 align-top">
+            <div class="flex flex-col items-start gap-1">
+              <div class="self-start">
+                <app-sla-badge [flag]="(getDetail(ticket.id)?.slaFlag) ?? ticket.slaFlag"></app-sla-badge>
               </div>
             </div>
           </td>
