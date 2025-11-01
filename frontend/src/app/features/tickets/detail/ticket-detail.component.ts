@@ -11,7 +11,7 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Ticket, TicketComment, TicketStatus } from '../../../core/models/ticket';
+import { Ticket, TicketComment, TicketHistory, TicketStatus } from '../../../core/models/ticket';
 import { TicketsService } from '../../../core/services/tickets.service';
 import { SlaBadgeComponent } from '../../../shared/components/sla-badge/sla-badge.component';
 import { TicketStatusChipComponent } from '../components/ticket-status-chip.component';
@@ -316,6 +316,10 @@ export class TicketDetailComponent implements OnInit {
     return comment.id;
   }
 
+  trackHistory(_index: number, history: TicketHistory): number {
+    return history.id;
+  }
+
   private async resolveUserRole(): Promise<void> {
     try {
       const me = await this.auth.ensureMe();
@@ -341,6 +345,8 @@ export class TicketDetailComponent implements OnInit {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: ticket => {
+          console.log('Fetched ticket:', ticket);
+          console.log('History count:', ticket.history?.length);
           this.ticket.set(ticket);
           this.syncStatusForm();
         },
