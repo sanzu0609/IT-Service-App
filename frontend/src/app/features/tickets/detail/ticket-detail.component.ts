@@ -8,7 +8,7 @@ import {
   inject,
   signal
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Ticket, TicketComment, TicketStatus } from '../../../core/models/ticket';
@@ -21,6 +21,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DateUtcPipe } from '../../../shared/pipes/date-utc.pipe';
 import { CountdownComponent } from '../../../shared/components/countdown/countdown.component';
+import { getSlaClass, getSlaLabel } from '../utils/ticket-style.util';
 
 const STATUS_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   NEW: ['IN_PROGRESS', 'ON_HOLD', 'CANCELLED'],
@@ -41,7 +42,6 @@ const AGENT_ALLOWED: TicketStatus[] = ['IN_PROGRESS', 'RESOLVED'];
     CommonModule,
     RouterLink,
     ReactiveFormsModule,
-    SlaBadgeComponent,
     TicketStatusChipComponent,
     DateUtcPipe,
     CountdownComponent
@@ -51,6 +51,7 @@ const AGENT_ALLOWED: TicketStatus[] = ['IN_PROGRESS', 'RESOLVED'];
 })
 export class TicketDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly tickets = inject(TicketsService);
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
@@ -138,6 +139,20 @@ export class TicketDetailComponent implements OnInit {
 
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private readonly POLL_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+
+  // expose helper for templates to get SLA badge classes
+  slaClass(flag?: unknown): string {
+    // delegate to shared util; coerce unknown to expected union
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return getSlaClass(flag);
+  }
+
+  slaLabel(flag?: unknown): string {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return getSlaLabel(flag);
+  }
 
   async ngOnInit(): Promise<void> {
     this.statusForm.controls.holdReason.disable({ emitEvent: false });
@@ -330,9 +345,10 @@ export class TicketDetailComponent implements OnInit {
           this.syncStatusForm();
         },
         error: err => {
-          this.error.set(this.resolveTicketError(err));
+          // handle auth / network errors specially
           this.ticket.set(null);
           this.syncStatusForm();
+          this.handleFetchError(err, id);
         }
       });
   }
@@ -365,6 +381,23 @@ export class TicketDetailComponent implements OnInit {
           this.toast.error(message);
         }
       });
+  }
+
+  private handleFetchError(err: unknown, id: number): void {
+    // If unauthorized, redirect to login so user can re-authenticate
+    try {
+      const anyErr = err as { status?: number };
+      if (anyErr?.status === 401 || anyErr?.status === 403) {
+        // preserve return url
+        this.router.navigate(['/login'], { queryParams: { next: `/tickets/${id}` } });
+        return;
+      }
+    } catch {
+      // ignore
+    }
+
+    // otherwise set an error message for the UI
+    this.error.set(this.resolveTicketError(err));
   }
 
   private upsertComment(comment: TicketComment): void {

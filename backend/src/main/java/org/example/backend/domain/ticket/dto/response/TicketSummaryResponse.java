@@ -12,7 +12,10 @@ public record TicketSummaryResponse(
         Long assigneeId,
         String assigneeFullName,
         String assigneeUsername,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime slaResponseDeadline,
+        LocalDateTime slaResolutionDeadline,
+        String slaFlag
 ) {
 }
 

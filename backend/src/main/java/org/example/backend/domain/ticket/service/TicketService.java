@@ -195,6 +195,19 @@ public class TicketService {
         return count;
     }
 
+    @Transactional
+    public int reinitializeAllSla() {
+        List<Ticket> tickets = ticketRepository.findAll();
+        int count = 0;
+        LocalDateTime now = LocalDateTime.now();
+        for (Ticket ticket : tickets) {
+            slaService.initializeSla(ticket, now);
+            ticketRepository.save(ticket);
+            count++;
+        }
+        return count;
+    }
+
     private void validateCreateCommand(CreateTicketCommand command) {
         if (!StringUtils.hasText(command.subject()) || command.subject().trim().length() < 5) {
             throw new IllegalArgumentException("Subject must be at least 5 characters");

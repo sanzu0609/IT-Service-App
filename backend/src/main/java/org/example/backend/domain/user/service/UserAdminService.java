@@ -63,7 +63,7 @@ public class UserAdminService {
     public UserDetailResponse updateUser(Long userId, UpdateUserRequest request, Long actingUserId) {
         User user = findUserOrThrow(userId);
 
-        if (request.isActive() != null && !request.isActive() && userId.equals(actingUserId)) {
+        if (request.active() != null && !request.active() && userId.equals(actingUserId)) {
             throw new IllegalStateException("You cannot deactivate your own account.");
         }
 
@@ -72,11 +72,11 @@ public class UserAdminService {
             user.setRole(request.role());
         }
 
-        if (request.isActive() != null) {
-            if (!request.isActive()) {
+        if (request.active() != null) {
+            if (!request.active()) {
                 guardLastAdmin(user);
             }
-            user.setActive(request.isActive());
+            user.setActive(request.active());
         }
 
         if (request.fullName() != null && !request.fullName().isBlank()) {

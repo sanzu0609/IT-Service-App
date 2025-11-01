@@ -28,8 +28,9 @@ class SlaServiceTest {
 
         slaService.initializeSla(ticket, base);
 
-        assertThat(ticket.getSlaResponseDeadline()).isEqualTo(base.plusHours(8));
-        assertThat(ticket.getSlaResolutionDeadline()).isEqualTo(base.plusHours(48));
+        // For MEDIUM priority per SLA rules: response 7h, resolution 26h
+        assertThat(ticket.getSlaResponseDeadline()).isEqualTo(base.plusHours(7));
+        assertThat(ticket.getSlaResolutionDeadline()).isEqualTo(base.plusHours(26));
         assertThat(ticket.getSlaFlag()).isEqualTo(TicketSlaFlag.OK);
     }
 
@@ -40,8 +41,9 @@ class SlaServiceTest {
 
         slaService.applyDeadlines(ticket, base);
 
-        assertThat(ticket.getSlaResponseDeadline()).isEqualTo(base.plusHours(1));
-        assertThat(ticket.getSlaResolutionDeadline()).isEqualTo(base.plusHours(8));
+        // For CRITICAL (Urgent) per SLA: response 4h, resolution 9h
+        assertThat(ticket.getSlaResponseDeadline()).isEqualTo(base.plusHours(4));
+        assertThat(ticket.getSlaResolutionDeadline()).isEqualTo(base.plusHours(9));
     }
 
     @Test

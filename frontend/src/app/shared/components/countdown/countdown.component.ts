@@ -7,13 +7,15 @@ import { formatRelativeTime, toDate } from '../../utils/time.util';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <span class="block text-xs text-slate-500" *ngIf="text() as value">
+    <span class="block text-xs" [ngClass]="compact ? '' : 'text-slate-500'" *ngIf="text() as value">
       {{ value }}
     </span>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CountdownComponent {
+  @Input()
+  compact = false;
   private readonly targetSignal = signal<Date | null>(null);
   private readonly textSignal = signal<string>('');
   private timer: ReturnType<typeof setInterval> | null = null;

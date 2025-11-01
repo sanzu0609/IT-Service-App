@@ -195,7 +195,10 @@ public class TicketController {
                 ticket.getAssignee() != null ? ticket.getAssignee().getId() : null,
                 ticket.getAssignee() != null ? ticket.getAssignee().getFullName() : null,
                 ticket.getAssignee() != null ? ticket.getAssignee().getUsername() : null,
-                ticket.getCreatedAt()
+                                ticket.getCreatedAt(),
+                                ticket.getSlaResponseDeadline(),
+                                ticket.getSlaResolutionDeadline(),
+                                ticket.getSlaFlag() != null ? ticket.getSlaFlag().name() : null
         );
     }
 
@@ -224,6 +227,9 @@ public class TicketController {
                 ticket.getAssignee() != null ? ticket.getAssignee().getId() : null,
                 ticket.getAssignee() != null ? ticket.getAssignee().getFullName() : null,
                 ticket.getAssignee() != null ? ticket.getAssignee().getUsername() : null,
+                ticket.getSlaResponseDeadline(),
+                ticket.getSlaResolutionDeadline(),
+                ticket.getSlaFlag() != null ? ticket.getSlaFlag().name() : null,
                 ticket.getCreatedAt(),
                 ticket.getUpdatedAt(),
                 ticket.getResolvedAt(),

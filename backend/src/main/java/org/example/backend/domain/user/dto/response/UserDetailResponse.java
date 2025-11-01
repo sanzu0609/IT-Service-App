@@ -11,7 +11,7 @@ public record UserDetailResponse(
         String role,
         DepartmentLiteDto department,
         Long departmentId,
-        boolean isActive,
+        boolean active,
         boolean mustChangePassword,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

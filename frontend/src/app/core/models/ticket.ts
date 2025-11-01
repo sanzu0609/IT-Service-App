@@ -7,7 +7,7 @@ export type TicketStatus =
   | 'REOPENED'
   | 'CANCELLED';
 
-export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | 'IMPROVEMENT';
 export type SlaFlag = 'OK' | 'NEAR' | 'BREACHED';
 
 export type TicketCategory =
@@ -66,6 +66,8 @@ export interface TicketSummary {
   status: TicketStatus;
   priority: Priority;
   category: TicketCategory;
+  slaResponseDeadline?: string | null;
+  slaResolutionDeadline?: string | null;
   slaFlag?: SlaFlag | null;
   createdAt: string;
   assigneeId?: number | null;

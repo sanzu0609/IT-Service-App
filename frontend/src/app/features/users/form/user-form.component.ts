@@ -67,6 +67,27 @@ export class UserFormComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  private updateDisabledState(): void {
+    // If overall form should be disabled (loading or saving), disable the whole form
+    if (this.formDisabled) {
+      this.form.disable({ emitEvent: false });
+      return;
+    }
+
+    // Otherwise enable all controls and re-apply per-field disables
+    this.form.enable({ emitEvent: false });
+
+    // Username should be disabled in edit mode
+    if (this.mode === 'edit') {
+      this.form.controls.username.disable({ emitEvent: false });
+    }
+
+    // If departments are loading, keep department control disabled
+    if (this.departmentsLoading) {
+      this.form.controls.departmentId.disable({ emitEvent: false });
+    }
+  }
+
   ngOnDestroy(): void {
     this.departmentsSub?.unsubscribe();
   }
@@ -86,7 +107,10 @@ export class UserFormComponent implements OnInit, OnChanges, OnDestroy {
       : this.usersService.create(payloads.createPayload!);
 
     request$
-      .pipe(finalize(() => (this.saving = false)))
+      .pipe(finalize(() => {
+        this.saving = false;
+        this.updateDisabledState();
+      }))
       .subscribe({
         next: () => {
           this.saved.emit();
@@ -158,10 +182,11 @@ export class UserFormComponent implements OnInit, OnChanges, OnDestroy {
         departmentId: this.user.departmentId ?? undefined,
         active: this.user.active
       });
-      this.form.controls.username.disable();
+      // apply disabled/enabled state consistently
+      this.updateDisabledState();
     } else if (this.mode === 'create') {
       this.resetForm();
-      this.form.controls.username.enable();
+      this.updateDisabledState();
     }
   }
 
@@ -176,6 +201,7 @@ export class UserFormComponent implements OnInit, OnChanges, OnDestroy {
     });
     this.form.controls.username.enable();
     this.errorMessage = '';
+    this.updateDisabledState();
   }
 
   private resolveErrorMessage(error: unknown): string {
@@ -195,12 +221,16 @@ export class UserFormComponent implements OnInit, OnChanges, OnDestroy {
 
   private loadDepartments(): void {
     this.departmentsLoading = true;
+    this.updateDisabledState();
     this.departmentsError = null;
     this.departmentsSub?.unsubscribe();
 
     this.departmentsSub = this.departmentsService
       .minimal()
-      .pipe(finalize(() => (this.departmentsLoading = false)))
+      .pipe(finalize(() => {
+        this.departmentsLoading = false;
+        this.updateDisabledState();
+      }))
       .subscribe({
         next: departments => {
           this.departments = departments ?? [];

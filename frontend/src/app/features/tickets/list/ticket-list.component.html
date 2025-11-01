@@ -56,6 +56,8 @@
     </div>
   </header>
 
+
+
   <div *ngIf="error()" class="rounded border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">
     {{ error() }}
   </div>
@@ -83,18 +85,15 @@
             <app-ticket-status-chip [status]="ticket.status"></app-ticket-status-chip>
           </td>
           <td class="px-3 py-3">{{ ticket.priority }}</td>
-          <td class="px-3 py-3">
-            <app-sla-badge [flag]="(getDetail(ticket.id)?.slaFlag) ?? ticket.slaFlag"></app-sla-badge>
-            <div *ngIf="getDetail(ticket.id) as d" class="mt-1 space-y-1 text-xs text-slate-500">
-              <div>
-                <span class="font-medium">Resp:</span>
-                <span>{{ d.slaResponseDeadline | dateUtc }}</span>
-                <app-countdown *ngIf="d.slaResponseDeadline" [target]="d.slaResponseDeadline"></app-countdown>
-              </div>
-              <div>
-                <span class="font-medium">Reso:</span>
-                <span>{{ d.slaResolutionDeadline | dateUtc }}</span>
-                <app-countdown *ngIf="d.slaResolutionDeadline" [target]="d.slaResolutionDeadline"></app-countdown>
+          <td class="px-3 py-2 align-top">
+            <div class="flex flex-col items-start gap-1">
+              <div class="self-start">
+                <ng-container *ngIf="getSlaTarget(ticket) as target">
+                  <span [ngClass]="slaClass((getDetail(ticket.id)?.slaFlag) ?? ticket.slaFlag)" [attr.aria-label]="slaLabel((getDetail(ticket.id)?.slaFlag) ?? ticket.slaFlag)">
+                    <app-countdown [target]="target" [compact]="true"></app-countdown>
+                  </span>
+                </ng-container>
+                <span *ngIf="!getSlaTarget(ticket)" class="text-sm text-slate-500">N/A</span>
               </div>
             </div>
           </td>

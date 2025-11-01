@@ -1,4 +1,5 @@
-﻿<section class="flex flex-col gap-4">
+﻿<div class="min-h-screen flex items-center justify-center px-4 py-8">
+  <section class="w-full max-w-3xl flex flex-col gap-4">
   <a [routerLink]="['/tickets']" class="text-sm font-semibold text-emerald-700 hover:underline">
     &larr; Back to tickets
   </a>
@@ -41,27 +42,36 @@
           <div>
             <dt class="font-semibold text-slate-500">SLA</dt>
             <dd class="mt-1">
-              <app-sla-badge [flag]="current.slaFlag"></app-sla-badge>
+              <div class="flex items-center gap-3">
+                <ng-container *ngIf="(current.slaResponseDeadline ?? current.slaResolutionDeadline) as target">
+                  <span [ngClass]="slaClass(current.slaFlag)" [attr.aria-label]="slaLabel(current.slaFlag)">
+                    <app-countdown [target]="target" [compact]="true"></app-countdown>
+                  </span>
+                </ng-container>
+                <span *ngIf="!current.slaResponseDeadline && !current.slaResolutionDeadline" class="text-sm text-slate-500">N/A</span>
+              </div>
             </dd>
           </div>
           <div>
             <dt class="font-semibold text-slate-500">Response deadline</dt>
             <dd class="mt-1 text-slate-800">
-              {{ current.slaResponseDeadline | dateUtc }}
-              <app-countdown
-                *ngIf="current.slaResponseDeadline"
-                [target]="current.slaResponseDeadline"
-              ></app-countdown>
+              <div class="flex items-center gap-3">
+                <span>{{ current.slaResponseDeadline | dateUtc }}</span>
+                <span *ngIf="current.slaResponseDeadline" [ngClass]="slaClass(current.slaFlag)">
+                  <app-countdown [target]="current.slaResponseDeadline" [compact]="true"></app-countdown>
+                </span>
+              </div>
             </dd>
           </div>
           <div>
             <dt class="font-semibold text-slate-500">Resolution deadline</dt>
             <dd class="mt-1 text-slate-800">
-              {{ current.slaResolutionDeadline | dateUtc }}
-              <app-countdown
-                *ngIf="current.slaResolutionDeadline"
-                [target]="current.slaResolutionDeadline"
-              ></app-countdown>
+              <div class="flex items-center gap-3">
+                <span>{{ current.slaResolutionDeadline | dateUtc }}</span>
+                <span *ngIf="current.slaResolutionDeadline" [ngClass]="slaClass(current.slaFlag)">
+                  <app-countdown [target]="current.slaResolutionDeadline" [compact]="true"></app-countdown>
+                </span>
+              </div>
             </dd>
           </div>
           <div>
@@ -265,4 +275,5 @@
       </section>
     </aside>
   </div>
-</section>
+  </section>
+</div>

@@ -31,6 +31,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TicketEditComponent implements OnInit, OnDestroy {
+  // route-mode edit (default); modal mode removed
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);

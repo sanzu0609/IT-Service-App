@@ -17,15 +17,19 @@ public class SlaService {
     private static final double NEAR_THRESHOLD = 0.8;
 
     static {
-        RESPONSE_DEADLINES.put(TicketPriority.LOW, Duration.ofHours(12));
-        RESPONSE_DEADLINES.put(TicketPriority.MEDIUM, Duration.ofHours(8));
-        RESPONSE_DEADLINES.put(TicketPriority.HIGH, Duration.ofHours(4));
-        RESPONSE_DEADLINES.put(TicketPriority.CRITICAL, Duration.ofHours(1));
+        // Standard support rules (hours) mapped from SLA document
+        // CRITICAL -> Urgent, HIGH -> High, MEDIUM -> Medium, LOW -> Low, IMPROVEMENT -> Improvement
+        RESPONSE_DEADLINES.put(TicketPriority.CRITICAL, Duration.ofHours(4)); // Urgent response
+        RESPONSE_DEADLINES.put(TicketPriority.HIGH, Duration.ofHours(6)); // High response
+        RESPONSE_DEADLINES.put(TicketPriority.MEDIUM, Duration.ofHours(7)); // Medium response
+        RESPONSE_DEADLINES.put(TicketPriority.LOW, Duration.ofHours(9)); // Low response
+        RESPONSE_DEADLINES.put(TicketPriority.IMPROVEMENT, Duration.ofHours(24)); // Improvement response
 
-        RESOLUTION_DEADLINES.put(TicketPriority.LOW, Duration.ofHours(72));
-        RESOLUTION_DEADLINES.put(TicketPriority.MEDIUM, Duration.ofHours(48));
-        RESOLUTION_DEADLINES.put(TicketPriority.HIGH, Duration.ofHours(24));
-        RESOLUTION_DEADLINES.put(TicketPriority.CRITICAL, Duration.ofHours(8));
+        RESOLUTION_DEADLINES.put(TicketPriority.CRITICAL, Duration.ofHours(9)); // Urgent resolution
+        RESOLUTION_DEADLINES.put(TicketPriority.HIGH, Duration.ofHours(18)); // High resolution
+        RESOLUTION_DEADLINES.put(TicketPriority.MEDIUM, Duration.ofHours(26)); // Medium resolution
+        RESOLUTION_DEADLINES.put(TicketPriority.LOW, Duration.ofHours(45)); // Low resolution
+        // IMPROVEMENT has no resolution SLA (optional)
     }
 
     public void initializeSla(Ticket ticket, LocalDateTime baseTime) {
