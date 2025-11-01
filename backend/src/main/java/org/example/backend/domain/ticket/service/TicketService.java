@@ -91,7 +91,7 @@ public class TicketService {
 
     @Transactional(readOnly = true)
     public Ticket getTicket(Long ticketId, AuthUserDetails actor) {
-        Ticket ticket = ticketRepository.findById(ticketId)
+        Ticket ticket = ticketRepository.findWithHistoryById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
         ensureCanView(ticket, actor);
         return ticket;
@@ -132,7 +132,11 @@ public class TicketService {
             ticket.setSlaFlag(TicketSlaFlag.OK);
         }
 
-        return ticketRepository.save(ticket);
+        Ticket saved = ticketRepository.save(ticket);
+        
+        // Refetch with history to ensure lazy-loaded history is available
+        return ticketRepository.findWithHistoryById(saved.getId())
+                .orElse(saved);
     }
 
     public void deleteTicket(Long ticketId, AuthUserDetails actor) {
@@ -142,6 +146,7 @@ public class TicketService {
         ticketRepository.delete(ticket);
     }
 
+    @Transactional
     public Ticket changeStatus(Long ticketId, TicketStatusChangeCommand command, AuthUserDetails actor) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
@@ -178,10 +183,17 @@ public class TicketService {
             ticket.setSlaFlag(slaService.evaluateFlag(ticket, LocalDateTime.now()));
         }
 
+        // Save ticket first to ensure it's persisted
+        Ticket saved = ticketRepository.save(ticket);
+        
+        // Then record history with the saved ticket
         User actorEntity = userRepository.findById(actor.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Actor not found"));
-        ticketHistoryService.recordStatusChange(ticket, previous, command.toStatus(), actorEntity, command.note());
-        return ticketRepository.save(ticket);
+        ticketHistoryService.recordStatusChange(saved, previous, command.toStatus(), actorEntity, command.note());
+        
+        // Refetch with history to ensure lazy-loaded history is available
+        return ticketRepository.findWithHistoryById(saved.getId())
+                .orElse(saved);
     }
 
     public int autoCloseResolvedTickets(LocalDateTime threshold, String note) {

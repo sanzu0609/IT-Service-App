@@ -49,6 +49,10 @@ export interface Ticket {
   slaFlag?: SlaFlag | null;
   createdAt: string;
   updatedAt: string;
+  resolvedAt?: string | null;
+  closedAt?: string | null;
+  comments?: TicketComment[];
+  history?: TicketHistory[];
 }
 
 export interface TicketComment {
@@ -56,6 +60,15 @@ export interface TicketComment {
   authorName?: string | null;
   content: string;
   isInternal: boolean;
+  createdAt: string;
+}
+
+export interface TicketHistory {
+  id: number;
+  fromStatus: string;
+  toStatus: string;
+  changedBy: string;
+  note?: string | null;
   createdAt: string;
 }
 
