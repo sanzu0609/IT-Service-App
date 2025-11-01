@@ -13,6 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
+  passwordVisible = false;
 
   readonly form = this.fb.nonNullable.group({
     username: ['', Validators.required],
