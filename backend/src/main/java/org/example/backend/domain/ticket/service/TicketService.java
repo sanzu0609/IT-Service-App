@@ -159,6 +159,12 @@ public class TicketService {
                 ticket.setClosedAt(LocalDateTime.now());
                 ticket.setSlaFlag(TicketSlaFlag.OK);
             }
+            case CANCELLED -> {
+                // Mark cancelled tickets similar to closed: set closed time, clear resolved, and reset SLA
+                ticket.setClosedAt(LocalDateTime.now());
+                ticket.setResolvedAt(null);
+                ticket.setSlaFlag(TicketSlaFlag.OK);
+            }
             case REOPENED -> {
                 ticket.setClosedAt(null);
                 ticket.setResolvedAt(null);
