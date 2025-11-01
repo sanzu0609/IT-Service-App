@@ -16,6 +16,8 @@ import org.example.backend.domain.ticket.repository.TicketSpecifications;
 import org.example.backend.domain.user.entity.User;
 import org.example.backend.domain.user.enums.UserRole;
 import org.example.backend.domain.user.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -26,6 +28,8 @@ import org.springframework.util.StringUtils;
 @Service
 @Transactional
 public class TicketService {
+
+    private static final Logger log = LoggerFactory.getLogger(TicketService.class);
 
     private static final EnumSet<TicketStatus> ACTIVE_STATUSES = EnumSet.of(
             TicketStatus.NEW,
@@ -59,6 +63,9 @@ public class TicketService {
     }
 
     public Ticket createTicket(CreateTicketCommand command, AuthUserDetails reporterDetails) {
+        log.info("Creating ticket: subject='{}', priority={}, category={}, reporter={}", 
+                command.subject(), command.priority(), command.category(), reporterDetails.getUsername());
+        
         validateCreateCommand(command);
         ensureCreateAllowed(reporterDetails);
 
@@ -75,34 +82,47 @@ public class TicketService {
         ticket.setTicketNumber(ticketNumberGenerator.nextTicketNumber());
         slaService.initializeSla(ticket, LocalDateTime.now());
 
-        return ticketRepository.save(ticket);
+        Ticket saved = ticketRepository.save(ticket);
+        log.info("Created ticket #{} with ID {}", saved.getTicketNumber(), saved.getId());
+        return saved;
     }
 
     @Transactional(readOnly = true)
     public Page<Ticket> findTickets(TicketFilterCriteria filter, AuthUserDetails actor, Pageable pageable) {
+        log.debug("Finding tickets with filter: status={}, priority={}, assigneeId={}, role={}", 
+                filter.status(), filter.priority(), filter.assigneeId(), actor.getRole());
+        
         Specification<Ticket> spec = TicketSpecifications.withFilters(
                 filter.status(),
                 filter.priority(),
                 filter.assigneeId(),
                 actor.getRole() == UserRole.END_USER ? actor.getId() : null
         );
-        return ticketRepository.findAll(spec, pageable);
+        Page<Ticket> result = ticketRepository.findAll(spec, pageable);
+        log.debug("Found {} tickets", result.getTotalElements());
+        return result;
     }
 
     @Transactional(readOnly = true)
     public Ticket getTicket(Long ticketId, AuthUserDetails actor) {
+        log.debug("Getting ticket {} for user {}", ticketId, actor.getUsername());
+        
         Ticket ticket = ticketRepository.findWithHistoryById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
         ensureCanView(ticket, actor);
+        
+        log.debug("Retrieved ticket #{} with {} history entries", 
+                ticket.getTicketNumber(), ticket.getHistory().size());
         return ticket;
     }
 
     public Ticket updateTicket(Long ticketId, UpdateTicketCommand command, AuthUserDetails actor) {
+        log.info("Updating ticket {}: priority={}, category={}, assigneeId={}, actor={}", 
+                ticketId, command.priority(), command.category(), command.assigneeId(), actor.getUsername());
+        
         ensureAgentOrAdmin(actor);
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
-
-        TicketPriority previousPriority = ticket.getPriority();
 
         boolean priorityChanged = command.priority() != null && command.priority() != ticket.getPriority();
         if (command.priority() != null) {
@@ -120,10 +140,12 @@ public class TicketService {
                 throw new IllegalArgumentException("Assignee must be active");
             }
             ticket.setAssignee(assignee);
+            log.info("Assigned ticket {} to user {}", ticketId, assignee.getUsername());
         }
 
         if (priorityChanged) {
             slaService.applyDeadlines(ticket, LocalDateTime.now());
+            log.info("Updated SLA deadlines for ticket {} due to priority change", ticketId);
         }
 
         if (ACTIVE_STATUSES.contains(ticket.getStatus())) {
@@ -140,14 +162,21 @@ public class TicketService {
     }
 
     public void deleteTicket(Long ticketId, AuthUserDetails actor) {
+        log.warn("Deleting ticket {} by admin user {}", ticketId, actor.getUsername());
+        
         ensureAdmin(actor);
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
         ticketRepository.delete(ticket);
+        
+        log.info("Deleted ticket #{} (ID: {})", ticket.getTicketNumber(), ticketId);
     }
 
     @Transactional
     public Ticket changeStatus(Long ticketId, TicketStatusChangeCommand command, AuthUserDetails actor) {
+        log.info("Changing ticket {} status to {} by user {}, note: '{}'", 
+                ticketId, command.toStatus(), actor.getUsername(), command.note());
+        
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
         ensureCanView(ticket, actor);
@@ -191,12 +220,16 @@ public class TicketService {
                 .orElseThrow(() -> new EntityNotFoundException("Actor not found"));
         ticketHistoryService.recordStatusChange(saved, previous, command.toStatus(), actorEntity, command.note());
         
+        log.info("Changed ticket #{} status from {} to {}", saved.getTicketNumber(), previous, command.toStatus());
+        
         // Refetch with history to ensure lazy-loaded history is available
         return ticketRepository.findWithHistoryById(saved.getId())
                 .orElse(saved);
     }
 
     public int autoCloseResolvedTickets(LocalDateTime threshold, String note) {
+        log.info("Auto-closing tickets resolved before {}", threshold);
+        
         List<Ticket> tickets = ticketRepository.findByStatusAndResolvedAtBefore(TicketStatus.RESOLVED, threshold);
         int count = 0;
         LocalDateTime now = LocalDateTime.now();

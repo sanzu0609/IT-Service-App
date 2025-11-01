@@ -7,6 +7,8 @@ import java.util.Optional;
 import org.example.backend.domain.auth.dto.request.LoginRequest;
 import org.example.backend.domain.auth.dto.response.AuthUserResponse;
 import org.example.backend.domain.department.dto.DepartmentLiteDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private final AuthenticationManager authenticationManager;
 
     public AuthService(AuthenticationManager authenticationManager) {
@@ -28,6 +31,8 @@ public class AuthService {
     }
 
     public AuthUserResponse login(LoginRequest request, HttpServletRequest httpRequest) throws AuthenticationException {
+        log.info("Login attempt for user: {}", request.username());
+        
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(request.username(), request.password());
 
@@ -42,11 +47,15 @@ public class AuthService {
         session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
 
         AuthUserDetails principal = (AuthUserDetails) authentication.getPrincipal();
+        log.info("User {} logged in successfully with role {}", principal.getUsername(), principal.getRole());
         return toResponse(principal);
     }
 
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof AuthUserDetails details) {
+            log.info("User {} logging out", details.getUsername());
+        }
         new SecurityContextLogoutHandler().logout(request, response, authentication);
     }
 

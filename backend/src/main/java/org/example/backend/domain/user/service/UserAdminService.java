@@ -14,6 +14,8 @@ import org.example.backend.domain.user.enums.UserRole;
 import org.example.backend.domain.user.repository.DepartmentRepository;
 import org.example.backend.domain.user.repository.UserRepository;
 import org.example.backend.domain.user.repository.UserSpecifications;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UserAdminService {
 
+    private static final Logger log = LoggerFactory.getLogger(UserAdminService.class);
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final PasswordEncoder passwordEncoder;
@@ -39,6 +42,9 @@ public class UserAdminService {
 
     @Transactional
     public UserSummaryResponse createUser(CreateUserRequest request) {
+        log.info("Creating user: username={}, email={}, role={}, departmentId={}", 
+                request.username(), request.email(), request.role(), request.departmentId());
+        
         validateUsernameUniqueness(request.username());
         validateEmailUniqueness(request.email());
 
@@ -56,11 +62,15 @@ public class UserAdminService {
         user.setActive(true);
 
         User saved = userRepository.save(user);
+        log.info("Created user {} (ID: {}) with role {}", saved.getUsername(), saved.getId(), saved.getRole());
         return toSummary(saved);
     }
 
     @Transactional
     public UserDetailResponse updateUser(Long userId, UpdateUserRequest request, Long actingUserId) {
+        log.info("Updating user {}: role={}, active={}, departmentId={}, actingUser={}", 
+                userId, request.role(), request.active(), request.departmentId(), actingUserId);
+        
         User user = findUserOrThrow(userId);
 
         if (request.active() != null && !request.active() && userId.equals(actingUserId)) {
