@@ -67,7 +67,7 @@ export class TicketListComponent implements OnInit {
   
   private readonly userRole = signal<Role | null>(null);
   private readonly currentUserId = signal<number | null>(null);
-  readonly cancelling = signal<number | null>(null);
+  // cancelling removed - cancel action no longer available in UI
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private readonly POLL_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
   private readonly destroyRef = inject(DestroyRef);
@@ -139,16 +139,6 @@ export class TicketListComponent implements OnInit {
     return role === 'ADMIN' || role === 'AGENT';
   }
 
-  canCancel(ticket: TicketSummary): boolean {
-    const role = this.userRole();
-    if (!role) {
-      return false;
-    }
-    if (ticket.status === 'CANCELLED') {
-      return false;
-    }
-    return role === 'ADMIN' || role === 'AGENT';
-  }
 
   applyFilters(): void {
     if (this.loading()) {
@@ -212,25 +202,7 @@ export class TicketListComponent implements OnInit {
     this.load();
   }
 
-  cancelTicket(ticket: TicketSummary): void {
-    if (!this.canCancel(ticket) || this.cancelling() === ticket.id) {
-      return;
-    }
-    this.cancelling.set(ticket.id);
-    this.tickets
-      .cancel(ticket.id)
-      .pipe(finalize(() => this.cancelling.set(null)))
-      .subscribe({
-        next: () => {
-          this.toast.success('Ticket cancelled.');
-          this.load();
-        },
-        error: err => {
-          const message = this.resolveErrorMessage(err);
-          this.toast.error(message);
-        }
-      });
-  }
+  // cancelTicket removed - cancel action not used in UI
 
   private async resolvePermissions(): Promise<void> {
     try {
