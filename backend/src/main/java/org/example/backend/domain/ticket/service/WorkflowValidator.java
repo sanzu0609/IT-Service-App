@@ -17,12 +17,12 @@ public class WorkflowValidator {
     private final Map<TicketStatus, Set<TicketStatus>> transitions = new EnumMap<>(TicketStatus.class);
 
     public WorkflowValidator() {
-        transitions.put(TicketStatus.NEW, EnumSet.of(TicketStatus.IN_PROGRESS));
-        transitions.put(TicketStatus.IN_PROGRESS, EnumSet.of(TicketStatus.ON_HOLD, TicketStatus.RESOLVED));
-        transitions.put(TicketStatus.ON_HOLD, EnumSet.of(TicketStatus.IN_PROGRESS));
+        transitions.put(TicketStatus.NEW, EnumSet.of(TicketStatus.IN_PROGRESS, TicketStatus.CANCELLED));
+        transitions.put(TicketStatus.IN_PROGRESS, EnumSet.of(TicketStatus.ON_HOLD, TicketStatus.RESOLVED, TicketStatus.CANCELLED));
+        transitions.put(TicketStatus.ON_HOLD, EnumSet.of(TicketStatus.IN_PROGRESS, TicketStatus.CANCELLED));
         transitions.put(TicketStatus.RESOLVED, EnumSet.of(TicketStatus.CLOSED, TicketStatus.REOPENED));
         transitions.put(TicketStatus.CLOSED, EnumSet.of(TicketStatus.REOPENED));
-        transitions.put(TicketStatus.REOPENED, EnumSet.of(TicketStatus.IN_PROGRESS));
+        transitions.put(TicketStatus.REOPENED, EnumSet.of(TicketStatus.IN_PROGRESS, TicketStatus.CANCELLED));
     }
 
     public void validateTransition(Ticket ticket, TicketStatus targetStatus, AuthUserDetails actor, String note) {
@@ -34,6 +34,11 @@ public class WorkflowValidator {
         Set<TicketStatus> allowedTargets = transitions.getOrDefault(currentStatus, Set.of());
         if (!allowedTargets.contains(targetStatus)) {
             throw new IllegalStateException("Cannot transition from %s to %s".formatted(currentStatus, targetStatus));
+        }
+
+        // Require a cancellation note when moving to CANCELLED for auditability
+        if (targetStatus == TicketStatus.CANCELLED && !StringUtils.hasText(note)) {
+            throw new IllegalArgumentException("Cancellation note is required when cancelling a ticket");
         }
 
         switch (currentStatus) {

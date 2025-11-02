@@ -63,7 +63,6 @@ export class TicketEditComponent implements OnInit, OnDestroy {
   readonly canEditDescription = signal(false);
   readonly canEditPriority = signal(false);
   readonly canAssign = signal(false);
-  readonly canCancel = signal(false);
   readonly canEditCategory = signal(false);
 
   readonly form = this.fb.nonNullable.group({
@@ -194,33 +193,6 @@ export class TicketEditComponent implements OnInit, OnDestroy {
     this.subscriptions.add(sub);
   }
 
-  cancelTicket(): void {
-    const ticketId = this.ticketId();
-    if (ticketId === null || !this.canCancel()) {
-      return;
-    }
-
-    this.saving.set(true);
-    this.error.set(null);
-
-    const sub = this.tickets
-      .cancel(ticketId)
-      .pipe(finalize(() => this.saving.set(false)))
-      .subscribe({
-        next: updated => {
-          this.toast.success('Ticket cancelled.');
-          this.router.navigate(['/tickets', updated.id]);
-        },
-        error: err => {
-          const message = this.extractErrorMessage(err);
-          this.error.set(message);
-          this.toast.error(message);
-        }
-      });
-
-    this.subscriptions.add(sub);
-  }
-
   private async initialize(): Promise<void> {
     try {
       const me = await this.auth.ensureMe();
@@ -296,13 +268,11 @@ export class TicketEditComponent implements OnInit, OnDestroy {
     const canEditPriority = isAdmin || isAgent;
     const canAssign = isAdmin || isAgent;
     const canEditCategory = isAdmin || isAgent;
-    const canCancel = isAdmin || isAgent;
-
-    this.canEditSubject.set(canEditSubject);
+  // cancel action intentionally removed from UI; keep other permissions
+  this.canEditSubject.set(canEditSubject);
     this.canEditDescription.set(canEditDescription);
     this.canEditPriority.set(canEditPriority);
     this.canAssign.set(canAssign);
-    this.canCancel.set(canCancel);
     this.canEditCategory.set(canEditCategory);
 
     this.toggleControl(this.form.controls.subject, canEditSubject, ticket.subject);

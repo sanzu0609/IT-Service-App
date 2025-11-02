@@ -10,6 +10,8 @@ import org.example.backend.domain.department.dto.request.UpdateDepartmentRequest
 import org.example.backend.domain.department.entity.Department;
 import org.example.backend.domain.user.repository.DepartmentRepository;
 import org.example.backend.domain.user.repository.DepartmentSpecifications;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class DepartmentService {
 
+    private static final Logger log = LoggerFactory.getLogger(DepartmentService.class);
     private final DepartmentRepository departmentRepository;
 
     public DepartmentService(DepartmentRepository departmentRepository) {
@@ -39,6 +42,8 @@ public class DepartmentService {
 
     @Transactional
     public DepartmentDto create(CreateDepartmentRequest request) {
+        log.info("Creating department: code={}, name={}", request.code(), request.name());
+        
         String normalizedCode = normalizeCode(request.code());
         validateUniqueCode(normalizedCode);
 
@@ -54,11 +59,15 @@ public class DepartmentService {
         department.setActive(request.active() == null || request.active());
 
         Department saved = departmentRepository.save(department);
+        log.info("Created department {} (ID: {})", saved.getCode(), saved.getId());
         return toDto(saved);
     }
 
     @Transactional
     public DepartmentDto update(Long id, UpdateDepartmentRequest request) {
+        log.info("Updating department {}: code={}, name={}, active={}", 
+                id, request.code(), request.name(), request.active());
+        
         Department department = findById(id);
 
         if (request.code() != null) {

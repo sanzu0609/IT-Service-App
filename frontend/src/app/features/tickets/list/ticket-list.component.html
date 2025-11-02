@@ -116,17 +116,7 @@
             >
               <i class="fa-solid fa-pen"></i>
             </a>
-            <button
-              *ngIf="canCancel(ticket)"
-              type="button"
-              class="text-rose-600 px-2"
-              (click)="cancelTicket(ticket)"
-              [disabled]="cancelling() === ticket.id"
-              title="Cancel ticket"
-              aria-label="Cancel ticket"
-            >
-              <i class="fa-solid fa-ban"></i>
-            </button>
+            <!-- Cancel action removed (no longer used) -->
           </td>
         </tr>
         <tr *ngIf="!current.content.length" class="border-t text-center text-slate-500">

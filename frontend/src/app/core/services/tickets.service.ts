@@ -8,6 +8,7 @@ import {
   Ticket,
   TicketCategory,
   TicketComment,
+  TicketHistory,
   TicketUserRef,
   SlaFlag,
   TicketStatus,
@@ -146,6 +147,17 @@ interface TicketDetailResponseDto {
   updatedAt: string;
   resolvedAt?: string | null;
   closedAt?: string | null;
+  comments?: TicketCommentResponseDto[];
+  history?: TicketHistoryResponseDto[];
+}
+
+interface TicketHistoryResponseDto {
+  id: number;
+  fromStatus: string;
+  toStatus: string;
+  changedBy: string;
+  note?: string | null;
+  createdAt: string;
 }
 
 interface TicketCommentResponseDto {
@@ -172,7 +184,11 @@ function mapTicketDetailResponse(dto: TicketDetailResponseDto): Ticket {
     slaResolutionDeadline: dto.slaResolutionDeadline ?? null,
     slaFlag: dto.slaFlag ?? null,
     createdAt: dto.createdAt,
-    updatedAt: dto.updatedAt
+    updatedAt: dto.updatedAt,
+    resolvedAt: dto.resolvedAt ?? null,
+    closedAt: dto.closedAt ?? null,
+    comments: dto.comments?.map(mapTicketComment) ?? [],
+    history: dto.history?.map(mapTicketHistory) ?? []
   };
 }
 
@@ -201,3 +217,13 @@ function mapTicketComment(dto: TicketCommentResponseDto): TicketComment {
   };
 }
 
+function mapTicketHistory(dto: TicketHistoryResponseDto): TicketHistory {
+  return {
+    id: dto.id,
+    fromStatus: dto.fromStatus,
+    toStatus: dto.toStatus,
+    changedBy: dto.changedBy,
+    note: dto.note ?? null,
+    createdAt: dto.createdAt
+  };
+}
