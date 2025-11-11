@@ -17,6 +17,11 @@ import java.time.LocalDateTime;
 import org.example.backend.domain.department.entity.Department;
 import org.example.backend.domain.user.enums.UserRole;
 
+/**
+ * Entity đại diện cho User trong hệ thống
+ * Lưu trữ thông tin authentication và authorization
+ * Liên kết với Department để quản lý tổ chức
+ */
 @Entity
 @Table(name = "users")
 public class User {
@@ -26,41 +31,51 @@ public class User {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String username;
+    private String username;  // Tên đăng nhập, unique
 
     @Column(nullable = false, unique = true)
-    private String email;
+    private String email;     // Email, unique
 
     @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
+    private String passwordHash;  // Mật khẩu đã hash bằng BCrypt
 
     @Column(name = "full_name", nullable = false)
-    private String fullName;
+    private String fullName;  // Họ tên đầy đủ
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private UserRole role;
+    private UserRole role;    // Vai trò: END_USER, AGENT, ADMIN
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
-    private Department department;
+    private Department department;  // Phòng ban (optional)
 
     @Column(name = "is_active", nullable = false)
-    private boolean active = true;
+    private boolean active = true;  // Tài khoản có active không
 
     @Column(name = "must_change_password", nullable = false)
-    private boolean mustChangePassword = true;
+    private boolean mustChangePassword = true;  // Bắt buộc đổi password lần đầu
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt;  // Thời gian tạo
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedAt;  // Thời gian cập nhật cuối
 
+    // Constructor protected cho JPA
     protected User() {
         // JPA only
     }
 
+    /**
+     * Constructor public cho việc tạo User mới
+     * @param username tên đăng nhập
+     * @param email địa chỉ email
+     * @param passwordHash mật khẩu đã hash
+     * @param fullName họ tên đầy đủ
+     * @param role vai trò người dùng
+     * @param department phòng ban (có thể null)
+     */
     public User(
             String username,
             String email,
@@ -77,6 +92,10 @@ public class User {
         this.department = department;
     }
 
+    /**
+     * Callback trước khi persist entity
+     * Set createdAt và updatedAt
+     */
     @PrePersist
     void onCreate() {
         LocalDateTime now = LocalDateTime.now();
@@ -84,6 +103,10 @@ public class User {
         this.updatedAt = now;
     }
 
+    /**
+     * Callback trước khi update entity
+     * Update updatedAt
+     */
     @PreUpdate
     void onUpdate() {
         this.updatedAt = LocalDateTime.now();
