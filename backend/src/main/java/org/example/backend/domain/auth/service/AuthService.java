@@ -32,7 +32,7 @@ public class AuthService {
 
     public AuthUserResponse login(LoginRequest request, HttpServletRequest httpRequest) throws AuthenticationException {
         log.info("Login attempt for user: {}", request.username());
-        
+
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(request.username(), request.password());
 

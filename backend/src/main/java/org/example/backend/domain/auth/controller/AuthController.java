@@ -37,6 +37,7 @@ public class AuthController {
             AuthUserResponse response = authService.login(request, httpRequest);
             return ResponseEntity.ok(response);
         } catch (AuthenticationException ex) {
+            // Trả về 401 với error message nếu login thất bại
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of(
                             "code", "AUTH_BAD_CREDENTIALS",
