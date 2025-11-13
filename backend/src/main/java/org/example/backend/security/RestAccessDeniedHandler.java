@@ -10,9 +10,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
-/**
- * Emits a JSON 403 response when an authenticated user lacks sufficient privileges.
- */
 @Component
 public class RestAccessDeniedHandler implements AccessDeniedHandler {
 

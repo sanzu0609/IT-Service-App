@@ -8,9 +8,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-/**
- * Spring Security principal that exposes the application's user information.
- */
 public class AuthUserDetails implements UserDetails {
 
     private final Long id;

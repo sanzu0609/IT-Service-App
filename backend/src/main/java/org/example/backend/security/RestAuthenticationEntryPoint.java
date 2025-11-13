@@ -10,9 +10,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 
-/**
- * Sends a JSON payload when authentication is required but missing or invalid.
- */
 @Component
 public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
